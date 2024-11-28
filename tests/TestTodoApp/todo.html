@@ -1,0 +1,28 @@
+{{define "title"}} {{.PageTitle}} {{end}}
+{{define "body"}}
+<section class="app">
+    <header class="header">
+        <h1>{{.PageTitle}}</h1>
+    </header>
+    <section class="create" data-todo="create">
+        <input placeholder="Write something!" autofocus class="new-item" data-todo="new" />
+        <hr />
+    </section>
+    <section class="main" data-todo="main">
+        <ul class="list" data-todo="list">
+            {{range .Items}}
+            <li class="item">{{template "listitem" .}}</li>
+            {{end}}
+        </ul>
+    </section>
+</section>
+{{end}}
+
+{{define "listitem"}}
+<div class="view">
+    <input data-todo="toggle" class="toggle" type="checkbox" {{if .Done }} checked {{end}}>
+    <label data-todo="label">{{.Text}}</label>
+    <button class="destroy" data-todo="destroy"></button>
+    <input class="edit" data-todo="edit" value="{{.Text}}">
+</div>
+{{end}}
