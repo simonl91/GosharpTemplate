@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>GosharpTemplate</Title>
     <Authors>Simon Langlo</Authors>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Description>Go-style templating library for c#</Description>
     <Copyright>Simon Langlo</Copyright>
     <PackageProjectUrl>https://github.com/simonl91/GosharpTemplate</PackageProjectUrl>
