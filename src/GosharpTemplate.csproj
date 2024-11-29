@@ -2,6 +2,31 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>GosharpTemplate</Title>
+    <Authors>Simon Langlo</Authors>
+    <Version>0.1.0</Version>
+    <Description>Go-style templating library for c#</Description>
+    <Copyright>Simon Langlo</Copyright>
+    <PackageProjectUrl>https://github.com/simonl91/GosharpTemplate</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/simonl91/GosharpTemplate</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Csharp;golang;go;template;hmtl;templating;templates;go-style;go templates;</PackageTags>
+    <NeutralLanguage>en</NeutralLanguage>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <IncludeSymbols>True</IncludeSymbols>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
