@@ -1,4 +1,4 @@
-using GosharpTemplates;
+using GosharpTemplate;
 
 namespace GosharpTemplate.Tests;
 
