@@ -1,9 +1,9 @@
 # GosharpTemplate
 This is a lightweight, dependency free, feature incomplete, **NOT** production ready Go-style HTML templating library.
 
-![Example 1](img/usage_example.png)
+![Example 1](https://github.com/simonl91/GosharpTemplate/blob/main/img/usage_example.png)
 
-![Result 1](img/usage_example_result.png)
+![Result 1](https://github.com/simonl91/GosharpTemplate/blob/main/img/usage_example_result.png)
 
 ## Security
 #### Injection
