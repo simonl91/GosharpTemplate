@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace GosharpTemplates
+namespace GosharpTemplate
 {
 
     internal class Lexer
@@ -129,7 +129,7 @@ namespace GosharpTemplates
 
         private TokenKind identifierType()
         {
-            var identifier = text.Substring(start, (current - start));
+            var identifier = text.Substring(start, current - start);
             switch (identifier)
             {
                 case "define":

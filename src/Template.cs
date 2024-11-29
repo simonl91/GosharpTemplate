@@ -2,7 +2,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Text;
 
-namespace GosharpTemplates
+namespace GosharpTemplate
 {
     /// <summary>
     /// Represents the parsed representation of a template

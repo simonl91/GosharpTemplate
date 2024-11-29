@@ -1,4 +1,4 @@
-# GosharpTemplates
+# GosharpTemplate
 This is a lightweight, dependency free, feature incomplete, **NOT** production ready Go-style HTML templating library.
 
 ![Example 1](img/usage_example.png)
@@ -7,13 +7,13 @@ This is a lightweight, dependency free, feature incomplete, **NOT** production r
 
 ## Security
 #### Injection
-    Templates are not injection safe at the moment.
-    It is assumed that the template author and the data is trusted.
-    You can sanitize the data your self using something like:
-    System.Web.HttpUtility.HtmlEncode / .HtmlAttributeEncode / .UrlEncode.
+Templates are not injection safe at the moment.
+It is assumed that the template author and the data is trusted.
+You can sanitize the data your self using something like:
+System.Web.HttpUtility.HtmlEncode / .HtmlAttributeEncode / .UrlEncode.
 
 #### Runtime Errors
-    The current error model is to crash if something is wrong.
+The current error model is to crash if something is wrong.
 
 ## Supported features so far:
 - define

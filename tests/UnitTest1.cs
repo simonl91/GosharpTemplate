@@ -1,6 +1,6 @@
 using GosharpTemplates;
 
-namespace tests;
+namespace GosharpTemplate.Tests;
 
 public class Tests
 {

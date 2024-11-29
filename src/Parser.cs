@@ -4,7 +4,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace GosharpTemplates
+namespace GosharpTemplate
 {
     using Nodes = List<Node>;
     using Ident = List<string>;
@@ -21,7 +21,7 @@ namespace GosharpTemplates
         internal List<TemplateData> allTemplateCalls;
         internal List<RangeData> allRanges;
         internal List<BlockData> allBlocks;
-        internal List<string> allHtml;
+        internal Ident allHtml;
 
         //private List<string> errors;
         private List<Token> tokens;
@@ -61,7 +61,7 @@ namespace GosharpTemplates
             allTemplateCalls = new List<TemplateData>();
             allRanges = new List<RangeData>();
             allBlocks = new List<BlockData>();
-            allHtml = new List<string>();
+            allHtml = new Ident();
             allRoots = new List<RootData>();
 
             allIdents.Add(new Ident() { "." });
@@ -579,7 +579,7 @@ namespace GosharpTemplates
         static bool isCollection(object o) =>
             o.GetType().GetInterfaces().Any(i => i.Name == "ICollection");
 
-        internal object resolveObjectMembers(object data, List<string> path)
+        internal object resolveObjectMembers(object data, Ident path)
         {
             var idents = new Queue<string>(path);
             object newData = data;
