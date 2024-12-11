@@ -62,7 +62,7 @@ namespace GosharpTemplate
                 var c = advance();
                 if (c == '\n') newlineIndicies.Add(current - 1);
             }
-            Debug.Assert(false, "unreachable!");
+            Trace.Assert(false, "unreachable!");
             return tokens;
         }
 
@@ -186,7 +186,7 @@ namespace GosharpTemplate
 
         internal string GetTextFromStringToken(Token token)
         {
-            Debug.Assert(token.Kind == TokenKind.String,
+            Trace.Assert(token.Kind == TokenKind.String,
                 "Expected string token");
             return text.Substring(token.Start + 1, token.Length - 2);
         }

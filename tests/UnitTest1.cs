@@ -5,10 +5,10 @@ namespace GosharpTemplate.Tests;
 public class Tests
 {
     private const string easyBlockTemplate =
-        @"{{block ""title"" . }}<h1>{{if .IsTrue }}{{ .PageTitle }}{{else}}dammit its false{{end}}</h1>{{end}}";
+        @"{{block ""title"" . }}<h1>{{if .IsTrue }}{{ .PageTitle }}{{else}}its false{{end}}</h1>{{end}}";
 
     private const string easyDefineTemplate =
-        @"{{define ""title"" }}<h1>{{if .IsTrue }}{{ .PageTitle }}{{else}}dammit its false{{end}}</h1>{{end}}";
+        @"{{define ""title"" }}<h1>{{if .IsTrue }}{{ .PageTitle }}{{else}}its false{{end}}</h1>{{end}}";
 
 
     [SetUp]

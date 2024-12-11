@@ -112,7 +112,7 @@ namespace GosharpTemplate
                 NodeKind.If => allIfs[rootNode.DataIdx].ChildrenIdxTrue,
                 _ => -1
             };
-            Debug.Assert(childrenIdx >= 0, ErrorMessage($"{rootNode.Kind}, cant have children"));
+            Trace.Assert(childrenIdx >= 0, ErrorMessage($"{rootNode.Kind}, cant have children"));
 
             for (int i = 0; i < tokens.Count; i++)
             {
@@ -136,11 +136,11 @@ namespace GosharpTemplate
                     case TokenKind.Eof:
                         return;
                     case TokenKind.Error:
-                        Debug.Assert(false,
+                        Trace.Assert(false,
                             ErrorMessage($"{lexer.GetErrorData(tokens[pos].DataIdx)}"));
                         return;
                     default:
-                        Debug.Assert(false,
+                        Trace.Assert(false,
                             ErrorMessage($"Unexpedted token {nth(0)}, expected Html or '{{'"));
                         return;
                 }
@@ -172,7 +172,7 @@ namespace GosharpTemplate
                     expect(TokenKind.ClosingBraceDouble);
                     return identNode;
                 default:
-                    Debug.Assert(false,
+                    Trace.Assert(false,
                         ErrorMessage($"not a valid expression"));
                     return new Node();
             }
@@ -260,7 +260,7 @@ namespace GosharpTemplate
                         sb.Append(lexer.GetText(tokens[pos]));
                         break;
                     default:
-                        Debug.Assert(false,
+                        Trace.Assert(false,
                             ErrorMessage($"Expected '.', identifier or '}}'"));
                         break;
                 }
@@ -288,7 +288,7 @@ namespace GosharpTemplate
 
         private void advance()
         {
-            Debug.Assert(!eof());
+            Trace.Assert(!eof());
             pos += 1;
         }
 
@@ -327,7 +327,7 @@ namespace GosharpTemplate
             {
                 return;
             }
-            Debug.Assert(false, ErrorMessage($"expected '{kind}'"));
+            Trace.Assert(false, ErrorMessage($"expected '{kind}'"));
         }
 
         private Token expectToken(TokenKind kind)
@@ -336,7 +336,7 @@ namespace GosharpTemplate
             {
                 return tokens[pos - 1];
             }
-            Debug.Assert(false, ErrorMessage($"expected '{kind}'"));
+            Trace.Assert(false, ErrorMessage($"expected '{kind}'"));
             return new Token { };
         }
 
@@ -524,7 +524,7 @@ namespace GosharpTemplate
                             var ifData = allIfs[node.DataIdx];
                             var ident = allIdents[ifData.IdentIdx];
                             var ifVariable = resolveObjectMembers(data, ident);
-                            Debug.Assert(ifVariable.GetType() == typeof(bool),
+                            Trace.Assert(ifVariable.GetType() == typeof(bool),
                                 $"expected boolean, got {ifVariable.GetType()}");
                             var children = (bool)ifVariable ?
                                 allChildren[ifData.ChildrenIdxTrue]
@@ -541,7 +541,7 @@ namespace GosharpTemplate
                             var ident = allIdents[rangeData.IdentIdx];
                             var rangeVariable = resolveObjectMembers(data, ident);
                             var rangeObjType = rangeVariable.GetType().GetGenericArguments()[0];
-                            Debug.Assert(isCollection(rangeVariable),
+                            Trace.Assert(isCollection(rangeVariable),
                                 $"{ident} needs to be IEnumerable to be used as range");
                             var children = allChildren[rangeData.ChildrenIdx];
                             foreach (var rangeObj in (ICollection)rangeVariable)
@@ -593,7 +593,7 @@ namespace GosharpTemplate
             if (idx > -1) return allDefines[idx].ChildrenIdx;
             idx = allBlocks.FindIndex(x => x.Name == name);
             if (idx > -1) return allBlocks[idx].ChildrenIdx;
-            Debug.Assert(false, $"Template '{name}' was not found");
+            Trace.Assert(false, $"Template '{name}' was not found");
             return -1;
         }
 
@@ -623,14 +623,14 @@ namespace GosharpTemplate
                         x.MemberType == MemberTypes.Field
                         || x.MemberType == MemberTypes.Property)
                     .FirstOrDefault(x => x.Name == ident);
-                Debug.Assert(member != null, $"Object member '{ident}' does not exist");
+                Trace.Assert(member != null, $"Object member '{ident}' does not exist");
                 newData = member.MemberType switch
                 {
                     MemberTypes.Property => type.GetProperty(ident)?.GetValue(newData),
                     MemberTypes.Field => type.GetField(ident)?.GetValue(newData),
                     _ => null
                 };
-                Debug.Assert(newData != null, "Object member '{ident}' is null");
+                Trace.Assert(newData != null, "Object member '{ident}' is null");
             }
             resolvedData.obj.Add(data);
             resolvedData.path.Add(path);

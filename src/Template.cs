@@ -42,7 +42,7 @@ namespace GosharpTemplate
             files = new string[filesPaths.Length];
             for (var i = 0; i < filesPaths.Length; i++)
             {
-                Debug.Assert(File.Exists(filesPaths[i]));
+                Trace.Assert(File.Exists(filesPaths[i]));
                 fileNames[i] = Path.GetFileName(filesPaths[i]);
                 files[i] = File.ReadAllText(filesPaths[i]);
             }
