@@ -482,86 +482,94 @@ namespace GosharpTemplate
             return node;
         }
 
-        internal string Eval(Node node, object data)
+        internal string Eval(Node rootNode, object rootData)
         {
-            switch (node.Kind)
+            var sb = new StringBuilder(4096);
+            var stack = new Stack<(Node, object)>(512);
+            stack.Push((rootNode, rootData));
+            while (stack.Count > 0)
             {
-                case NodeKind.Expression:
-                    {
-                        var ident = allIdents[node.DataIdx];
-                        return resolveObjectMembers(data, ident).ToString() ?? "";
-                    }
-                case NodeKind.Html:
-                    {
-                        var nodeData = allHtml[node.DataIdx];
-                        return nodeData;
-                    }
-                case NodeKind.If:
-                    {
-                        var ifData = allIfs[node.DataIdx];
-                        var ident = allIdents[ifData.IdentIdx];
-                        var ifVariable = resolveObjectMembers(data, ident);
-                        Debug.Assert(ifVariable.GetType() == typeof(bool),
-                            $"expected boolean, got {ifVariable.GetType()}");
-                        var children = (bool)ifVariable ?
-                            allChildren[ifData.ChildrenIdxTrue]
-                            : allChildren[ifData.ChildrenIdxFalse];
-                        var sb = new StringBuilder(100);
-                        foreach (var child in children)
+                var (node, data) = stack.Pop();
+                switch (node.Kind)
+                {
+                    case NodeKind.Expression:
                         {
-                            sb.Append(Eval(child, data));
+                            var ident = allIdents[node.DataIdx];
+                            sb.Append(resolveObjectMembers(data, ident).ToString() ?? "");
                         }
-                        return sb.ToString();
-                    }
-                case NodeKind.Range:
-                    {
-                        var rangeData = allRanges[node.DataIdx];
-                        var ident = allIdents[rangeData.IdentIdx];
-                        var rangeVariable = resolveObjectMembers(data, ident);
-                        var rangeObjType = rangeVariable.GetType().GetGenericArguments()[0];
-                        Debug.Assert(isCollection(rangeVariable),
-                            $"{ident} needs to be IEnumerable to be used as range");
-                        var sb = new StringBuilder(((ICollection)rangeVariable).Count * 100);
-                        var children = allChildren[rangeData.ChildrenIdx];
-                        foreach (var rangeObj in (ICollection)rangeVariable)
+                        break;
+                    case NodeKind.Html:
                         {
+                            var nodeData = allHtml[node.DataIdx];
+                            sb.Append(nodeData);
+                        }
+                        break;
+                    case NodeKind.If:
+                        {
+                            var ifData = allIfs[node.DataIdx];
+                            var ident = allIdents[ifData.IdentIdx];
+                            var ifVariable = resolveObjectMembers(data, ident);
+                            Debug.Assert(ifVariable.GetType() == typeof(bool),
+                                $"expected boolean, got {ifVariable.GetType()}");
+                            var children = (bool)ifVariable ?
+                                allChildren[ifData.ChildrenIdxTrue]
+                                : allChildren[ifData.ChildrenIdxFalse];
+                            //var sb = new StringBuilder(100);
                             foreach (var child in children)
                             {
-                                sb.Append(Eval(child, rangeObj));
+                                stack.Push((child, data));
+                            }
+                            //return sb.ToString();
+                        }
+                        break;
+                    case NodeKind.Range:
+                        {
+                            var rangeData = allRanges[node.DataIdx];
+                            var ident = allIdents[rangeData.IdentIdx];
+                            var rangeVariable = resolveObjectMembers(data, ident);
+                            var rangeObjType = rangeVariable.GetType().GetGenericArguments()[0];
+                            Debug.Assert(isCollection(rangeVariable),
+                                $"{ident} needs to be IEnumerable to be used as range");
+                            var children = allChildren[rangeData.ChildrenIdx];
+                            foreach (var rangeObj in (ICollection)rangeVariable)
+                            {
+                                for (var i = children.Count - 1; i >= 0; i--)
+                                {
+                                    stack.Push((children[i], rangeObj));
+                                }
                             }
                         }
-                        return sb.ToString();
-                    }
-                case NodeKind.Block:
-                    {
-                        var blockData = allBlocks[node.DataIdx];
-                        var ident = allIdents[blockData.DataIdentIdx];
-                        var dataVariable = resolveObjectMembers(data, ident);
-                        var children = allChildren[blockData.ChildrenIdx];
-                        var sb = new StringBuilder(4000);
-                        foreach (var child in children)
+                        break;
+                    case NodeKind.Block:
                         {
-                            sb.Append(Eval(child, dataVariable));
+                            var blockData = allBlocks[node.DataIdx];
+                            var ident = allIdents[blockData.DataIdentIdx];
+                            var dataVariable = resolveObjectMembers(data, ident);
+                            var children = allChildren[blockData.ChildrenIdx];
+                            for (var i = children.Count - 1; i >= 0; i--)
+                            {
+                                stack.Push((children[i], dataVariable));
+                            }
                         }
-                        return sb.ToString();
-                    }
-                case NodeKind.Template:
-                    {
-                        var templateData = allTemplateCalls[node.DataIdx];
-                        var ident = allIdents[templateData.IdentIdx];
-                        var dataVariable = resolveObjectMembers(data, ident);
-                        var childrenIdx = findTemplateChildrenIdx(templateData.Name);
-                        var children = allChildren[childrenIdx];
-                        var sb = new StringBuilder(4000);
-                        foreach (var child in children)
+                        break;
+                    case NodeKind.Template:
                         {
-                            sb.Append(Eval(child, dataVariable));
+                            var templateData = allTemplateCalls[node.DataIdx];
+                            var ident = allIdents[templateData.IdentIdx];
+                            var dataVariable = resolveObjectMembers(data, ident);
+                            var childrenIdx = findTemplateChildrenIdx(templateData.Name);
+                            var children = allChildren[childrenIdx];
+                            for (var i = children.Count - 1; i >= 0; i--)
+                            {
+                                stack.Push((children[i], dataVariable));
+                            }
                         }
-                        return sb.ToString();
-                    }
-                default:
-                    return "";
+                        break;
+                    default:
+                        break;
+                }
             }
+            return sb.ToString();
         }
 
         internal int findTemplateChildrenIdx(string name)
