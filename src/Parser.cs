@@ -7,21 +7,31 @@ using System.Collections.Generic;
 namespace GosharpTemplate
 {
     using Nodes = List<Node>;
-    using Ident = List<string>;
     using System.Text;
+    using System;
+
+    internal struct ResolvedData
+    {
+        public List<object> obj;
+        public List<string> path;
+        public List<object> data;
+    }
 
     internal class Parser
     {
         // Data for each node type, use Node.DataIdx to access from node;
         internal List<RootData> allRoots;
         internal List<IfData> allIfs;
-        internal List<Ident> allIdents;
+        internal List<string> allIdents;
         internal List<DefineData> allDefines;
         internal List<Nodes> allChildren;
         internal List<TemplateData> allTemplateCalls;
         internal List<RangeData> allRanges;
         internal List<BlockData> allBlocks;
-        internal Ident allHtml;
+        internal List<string> allHtml;
+
+        internal ResolvedData resolvedData;
+        //internal List<(object, string, object)> resolvedData;
 
         //private List<string> errors;
         private List<Token> tokens;
@@ -55,16 +65,23 @@ namespace GosharpTemplate
             pos = 0;
             tokens = new List<Token>();
             allIfs = new List<IfData>();
-            allIdents = new List<Ident>();
+            allIdents = new List<string>();
             allDefines = new List<DefineData>();
             allChildren = new List<Nodes>();
             allTemplateCalls = new List<TemplateData>();
             allRanges = new List<RangeData>();
             allBlocks = new List<BlockData>();
-            allHtml = new Ident();
+            allHtml = new List<string>();
             allRoots = new List<RootData>();
 
-            allIdents.Add(new Ident() { "." });
+            resolvedData = new ResolvedData()
+            {
+                obj = new List<object>(100),
+                path = new List<string>(100),
+                data = new List<object>(100)
+            };
+
+            allIdents.Add(".");
         }
 
         private string ErrorMessage(string message)
@@ -229,20 +246,18 @@ namespace GosharpTemplate
         {
             expect(TokenKind.Dot);
             var node = CreateIdentNode();
-            allIdents[node.DataIdx].Add(".");
+            var sb = new StringBuilder();
+            sb.Append(".");
+            //allIdents[node.DataIdx].Add(".");
             while (!at(TokenKind.ClosingBraceDouble))
             {
                 switch (nth(0))
                 {
                     case TokenKind.Dot:
-                        if (allIdents[node.DataIdx].Last() == ".")
-                            Debug.Assert(false,
-                                ErrorMessage("Two '.' in a row, expected identifier or '}}'"));
-                        else
-                            allIdents[node.DataIdx].Add(".");
+                        sb.Append(".");
                         break;
                     case TokenKind.Ident:
-                        allIdents[node.DataIdx].Add(lexer.GetText(tokens[pos]));
+                        sb.Append(lexer.GetText(tokens[pos]));
                         break;
                     default:
                         Debug.Assert(false,
@@ -251,6 +266,7 @@ namespace GosharpTemplate
                 }
                 advance();
             }
+            allIdents[node.DataIdx] = sb.ToString();
             return node;
         }
 
@@ -404,9 +420,8 @@ namespace GosharpTemplate
 
         private Node CreateIdentNode()
         {
-            var ident = new Ident();
             var dataIdx = allIdents.Count;
-            allIdents.Add(ident);
+            allIdents.Add("");
             var node = new Node
             {
                 Kind = NodeKind.Ident,
@@ -484,8 +499,8 @@ namespace GosharpTemplate
 
         internal string Eval(Node rootNode, object rootData)
         {
-            var sb = new StringBuilder(4096);
-            var stack = new Stack<(Node, object)>(512);
+            var sb = new StringBuilder();
+            var stack = new Stack<(Node, object)>();
             stack.Push((rootNode, rootData));
             while (stack.Count > 0)
             {
@@ -514,12 +529,10 @@ namespace GosharpTemplate
                             var children = (bool)ifVariable ?
                                 allChildren[ifData.ChildrenIdxTrue]
                                 : allChildren[ifData.ChildrenIdxFalse];
-                            //var sb = new StringBuilder(100);
                             foreach (var child in children)
                             {
                                 stack.Push((child, data));
                             }
-                            //return sb.ToString();
                         }
                         break;
                     case NodeKind.Range:
@@ -587,14 +600,23 @@ namespace GosharpTemplate
         static bool isCollection(object o) =>
             o.GetType().GetInterfaces().Any(i => i.Name == "ICollection");
 
-        internal object resolveObjectMembers(object data, Ident path)
+        internal object resolveObjectMembers(object data, string path)
         {
-            var idents = new Queue<string>(path);
-            object newData = data;
-            while (idents.Count > 0)
+            for (int i = 0; i < resolvedData.obj.Count; i++)
             {
-                var ident = idents.Dequeue();
-                if (ident == ".") continue;
+                if (resolvedData.obj[i] == data)
+                {
+                    if (resolvedData.path[i].Equals(path))
+                    {
+                        return resolvedData.data[i];
+                    }
+                } 
+            }
+
+            object newData = data;
+            foreach (var ident in path.Split("."))
+            {
+                if (string.IsNullOrEmpty(ident)) continue;
                 var type = newData.GetType();
                 var member = type.GetMembers()
                     .Where(x =>
@@ -610,6 +632,9 @@ namespace GosharpTemplate
                 };
                 Debug.Assert(newData != null, "Object member '{ident}' is null");
             }
+            resolvedData.obj.Add(data);
+            resolvedData.path.Add(path);
+            resolvedData.data.Add(newData);
             return newData;
         }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace GosharpTemplate
@@ -205,6 +206,7 @@ namespace GosharpTemplate
 
 
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int currentLength()
         {
             return current - start;
@@ -253,6 +255,8 @@ namespace GosharpTemplate
             return token;
         }
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool isAtOpenBraceDouble()
         {
             if (current + 1 >= text.Length) return false;
@@ -260,6 +264,7 @@ namespace GosharpTemplate
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool isAtClosingBraceDouble()
         {
             if (current + 1 >= text.Length) return false;
@@ -267,16 +272,19 @@ namespace GosharpTemplate
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool isAtEnd()
         {
             return current >= text.Length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private char peek()
         {
             return text[current];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private char nth(int n)
         {
             return n < text.Length ?
