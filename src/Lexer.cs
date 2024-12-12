@@ -28,9 +28,9 @@ namespace GosharpTemplate
         {
             start = 0;
             current = 0;
-            if (errorData.Count != 0) errorData.Clear();
-            if (newlineIndicies.Count != 0) newlineIndicies.Clear();
-            if (tokens.Count != 0) tokens.Clear();
+            errorData.Clear();
+            newlineIndicies.Clear();
+            tokens.Clear();
 
             // consume everything as html until end or '{{'
             for (int i = 0; i < text.Length; i++)
@@ -69,10 +69,14 @@ namespace GosharpTemplate
         internal void PrintToken(Token token)
         {
             var line = GetLine(token.Start);
+            var endLine = GetLine(token.Start + token.Length);
             var col = GetColumn(token.Start);
-            var col2 = col + token.Length - 1;
+            var endcol = GetColumn(token.Start + token.Length);
             var sb = new StringBuilder();
-            sb.Append($"{line} {col}-{col2}:");
+            if (line == endLine)
+                sb.Append($"{line} {col}-{endcol}:");
+            else
+                sb.Append($"{line}:{col}-{endLine}:{endcol}:");
             sb.AppendLine(token.ToString());
             //sb.AppendLine(template2.Substring(token.Start, token.Length));
             sb.AppendLine(GetText(token));
@@ -109,15 +113,18 @@ namespace GosharpTemplate
                 }
                 if (c == '"')
                 {
-                    tokens.Add(createString());
-                    continue;
+                    var stringToken = createString();
+                    tokens.Add(stringToken);
+                    if (stringToken.Kind == TokenKind.String) continue;
+                    else return;
                 }
                 if (c == '\n')
                 {
+                    tokens.Add(errorToken("Unterminated '{{ }}'"));
                     newlineIndicies.Add(current - 1);
-                    continue;
+                    return;
                 }
-                tokens.Add(errorToken("not a valid token"));
+                tokens.Add(errorToken($"'{c}' is not a valid inside '{{{{ ... }}}}'"));
             }
         }
 
@@ -159,15 +166,19 @@ namespace GosharpTemplate
 
         internal int GetLine(int index)
         {
-            for (int i = 0; i < newlineIndicies.Count; i++)
+            if (newlineIndicies.Count == 0) return 1;
+            var i = 0;
+            for (i = 0; i < newlineIndicies.Count; i++)
             {
-                if (newlineIndicies[i] > index) return i + 1;
+                if (index < newlineIndicies[i]) return i + 1;
             }
-            return 1;
+            return i + 1;
         }
 
         internal int GetColumn(int index)
         {
+            if (newlineIndicies.Count == 0)
+                return index + 1;
             for (int i = 0; i < newlineIndicies.Count; i++)
             {
                 if (newlineIndicies[i] > index)
@@ -176,7 +187,7 @@ namespace GosharpTemplate
                     return index - newlineIndicies[i - 1];
                 }
             }
-            return index + 1;
+            return index - newlineIndicies[newlineIndicies.Count - 1];
         }
 
         internal string GetText(Token token)
@@ -195,7 +206,12 @@ namespace GosharpTemplate
         {
             while (peek() != '"' && !isAtEnd())
             {
-                if (peek() == '\n') newlineIndicies.Add(current);
+                if (peek() == '\n')
+                {
+                    newlineIndicies.Add(current);
+                    advance();
+                    return errorToken("Unterminated string.");
+                }
                 advance();
             }
             if (isAtEnd()) return errorToken("Unterminated string.");
@@ -244,7 +260,7 @@ namespace GosharpTemplate
             var fromCol = GetColumn(start);
             var toCol = fromCol + (length - 1);
             var extraDataIndex = errorData.Count;
-            errorData.Add($"{line} col {fromCol}-{toCol} error: {errorMessage}");
+            errorData.Add($"{line} {fromCol}-{toCol} error: {errorMessage}");
             var token = new Token()
             {
                 Kind = TokenKind.Error,
@@ -321,7 +337,6 @@ namespace GosharpTemplate
             current++;
             return text[current - 1];
         }
-
 
     }
 
