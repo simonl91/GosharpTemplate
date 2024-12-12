@@ -9,12 +9,13 @@ namespace GosharpTemplate
     using Nodes = List<Node>;
     using System.Text;
     using System;
+    using System.Linq.Expressions;
 
-    internal struct ResolvedData
+    internal struct DataAccessors
     {
-        public List<object> obj;
-        public List<string> path;
-        public List<object> data;
+        public List<Type> Types;
+        public List<string> Paths;
+        public List<Func<object, object>> Accessors;
     }
 
     internal class Parser
@@ -30,7 +31,7 @@ namespace GosharpTemplate
         internal List<BlockData> allBlocks;
         internal List<string> allHtml;
 
-        internal ResolvedData resolvedData;
+        internal DataAccessors accessors;
         //internal List<(object, string, object)> resolvedData;
 
         //private List<string> errors;
@@ -81,11 +82,11 @@ namespace GosharpTemplate
             allHtml = new List<string>();
             allRoots = new List<RootData>();
 
-            resolvedData = new ResolvedData()
+            accessors = new DataAccessors()
             {
-                obj = new List<object>(100),
-                path = new List<string>(100),
-                data = new List<object>(100)
+                Types = new List<Type>(),
+                Paths = new List<string>(),
+                Accessors = new List<Func<object, object>>()
             };
 
             allIdents.Add(".");
@@ -525,7 +526,8 @@ namespace GosharpTemplate
                     case NodeKind.Expression:
                         {
                             var ident = allIdents[node.DataIdx];
-                            sb.Append(resolveObjectMembers(data, ident)?.ToString() ?? "");
+                            var accessor = resolveObjectMembers(data, ident);
+                            sb.Append(accessor.Invoke(data)?.ToString() ?? "");
                         }
                         break;
                     case NodeKind.Html:
@@ -538,7 +540,8 @@ namespace GosharpTemplate
                         {
                             var ifData = allIfs[node.DataIdx];
                             var ident = allIdents[ifData.IdentIdx];
-                            var ifVariable = resolveObjectMembers(data, ident);
+                            var ifAccessor = resolveObjectMembers(data, ident);
+                            var ifVariable = ifAccessor.Invoke(data);
                             Trace.Assert(ifVariable.GetType() == typeof(bool),
                                 $"expected boolean, got {ifVariable.GetType()}");
                             var children = (bool)ifVariable ?
@@ -554,7 +557,8 @@ namespace GosharpTemplate
                         {
                             var rangeData = allRanges[node.DataIdx];
                             var ident = allIdents[rangeData.IdentIdx];
-                            var rangeVariable = resolveObjectMembers(data, ident);
+                            var rangeAccessor = resolveObjectMembers(data, ident);
+                            var rangeVariable = rangeAccessor.Invoke(data);
                             Trace.Assert(isCollection(rangeVariable),
                                 $"{ident} needs to implement ICollection to be used as range");
                             var children = allChildren[rangeData.ChildrenIdx];
@@ -571,7 +575,8 @@ namespace GosharpTemplate
                         {
                             var blockData = allBlocks[node.DataIdx];
                             var ident = allIdents[blockData.DataIdentIdx];
-                            var dataVariable = resolveObjectMembers(data, ident);
+                            var dataAccessor = resolveObjectMembers(data, ident);
+                            var dataVariable = dataAccessor.Invoke(data);
                             var children = allChildren[blockData.ChildrenIdx];
                             for (var i = children.Count - 1; i >= 0; i--)
                             {
@@ -583,7 +588,8 @@ namespace GosharpTemplate
                         {
                             var templateData = allTemplateCalls[node.DataIdx];
                             var ident = allIdents[templateData.IdentIdx];
-                            var dataVariable = resolveObjectMembers(data, ident);
+                            var dataAccessor = resolveObjectMembers(data, ident);
+                            var dataVariable = dataAccessor.Invoke(data);
                             var childrenIdx = findTemplateChildrenIdx(templateData.Name);
                             var children = allChildren[childrenIdx];
                             for (var i = children.Count - 1; i >= 0; i--)
@@ -614,43 +620,53 @@ namespace GosharpTemplate
         static bool isCollection(object o) =>
             o.GetType().GetInterfaces().Any(i => i.Name == "ICollection");
 
-        internal object resolveObjectMembers(object data, string path)
+        private static Func<object, object> GenerateGetterLambda(object data, string path)
         {
-            // Check if type has allready been resolved
-            for (int i = 0; i < resolvedData.obj.Count; i++)
+            try
             {
-                if (resolvedData.obj[i] == data)
+                var objParameterExpr = Expression.Parameter(typeof(object), "instance");
+                var instanceExpr = Expression.Convert(objParameterExpr, data.GetType());
+
+                Expression current = instanceExpr;
+
+                foreach (var propertyName in path.Split('.'))
                 {
-                    if (resolvedData.path[i].Equals(path))
+                    if (string.IsNullOrEmpty(propertyName)) continue;
+                    current = Expression.PropertyOrField(current, propertyName);
+                }
+
+                current = Expression.Convert(current, typeof(object));
+
+                return Expression.Lambda<Func<object, object>>(current, objParameterExpr).Compile();
+            }
+            catch (Exception ex)
+            {
+                Trace.Fail(ex.Message);
+                return (x) => x; // unreachable
+            }
+        } 
+
+        internal Func<object, object> resolveObjectMembers(object data, string path)
+        {
+            var typ = data.GetType();
+            // Check if type has allready been resolved
+            for (int i = 0; i < accessors.Types.Count; i++)
+            {
+                if (accessors.Types[i] == typ)
+                {
+                    if (accessors.Paths[i].Equals(path))
                     {
-                        return resolvedData.data[i];
+                        return accessors.Accessors[i];
                     }
                 }
             }
+            var accessor = GenerateGetterLambda(data, path);
 
-            object newData = data;
-            foreach (var ident in path.Split("."))
-            {
-                if (string.IsNullOrEmpty(ident)) continue;
-                var type = newData.GetType();
-                var member = type.GetMembers()
-                    .Where(x =>
-                        x.MemberType == MemberTypes.Field
-                        || x.MemberType == MemberTypes.Property)
-                    .FirstOrDefault(x => x.Name == ident);
-                Trace.Assert(member != null, $"Object member '{ident}' does not exist");
-                newData = member.MemberType switch
-                {
-                    MemberTypes.Property => type.GetProperty(ident)?.GetValue(newData),
-                    MemberTypes.Field => type.GetField(ident)?.GetValue(newData),
-                    _ => null
-                };
-            }
             // store resolved types
-            resolvedData.obj.Add(data);
-            resolvedData.path.Add(path);
-            resolvedData.data.Add(newData);
-            return newData;
+            accessors.Types.Add(typ);
+            accessors.Paths.Add(path);
+            accessors.Accessors.Add(accessor);
+            return accessor;
         }
 
         // Big ugly print method for debugging
