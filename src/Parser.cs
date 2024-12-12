@@ -50,14 +50,21 @@ namespace GosharpTemplate
             lexer = lex;
             tokens.AddRange(lex.Lex());
 
+            var lexingErrors = tokens.Where(x => x.Kind == TokenKind.Error).ToList();
+            if (lexingErrors.Count > 0)
+            {
+                var errorBuilder = new StringBuilder();
+                errorBuilder.AppendLine($"Syntax errors in {rootName}:");
+                foreach (var errorToken in lexingErrors)
+                {
+                    errorBuilder.AppendLine(lexer.GetErrorData(errorToken.DataIdx));
+                }
+                Trace.Fail(errorBuilder.ToString());
+            }
+
             var tree = CreateRootNode(rootName);
             tree.Kind = NodeKind.Root;
             parseTemplate(tree);
-            //foreach (var tok in tokens)
-            //{
-            //    lexer.PrintToken(tok);
-            //}
-            //Console.WriteLine(printNode(tree, 0));
         }
 
         private void initializeState()
@@ -96,7 +103,7 @@ namespace GosharpTemplate
             var line = lexer.GetLine(token.Start);
             var col = lexer.GetColumn(token.Start);
             var col2 = col + System.Math.Abs(token.Length - 1);
-            sb.Append($"Error at {line} {col}-{col2} '{lexer.GetText(token)}': ");
+            sb.AppendLine($"Error at {line} {col}-{col2} '{lexer.GetText(token)}': ");
             sb.AppendLine(message);
             return sb.ToString();
         }
@@ -171,6 +178,10 @@ namespace GosharpTemplate
                     identNode.Kind = NodeKind.Expression;
                     expect(TokenKind.ClosingBraceDouble);
                     return identNode;
+                case TokenKind.Error:
+                    Trace.Assert(false,
+                        ErrorMessage($"{lexer.GetErrorData(tokens[pos].DataIdx)}"));
+                    return new Node();
                 default:
                     Trace.Assert(false,
                         ErrorMessage($"not a valid expression"));
@@ -259,6 +270,10 @@ namespace GosharpTemplate
                     case TokenKind.Ident:
                         sb.Append(lexer.GetText(tokens[pos]));
                         break;
+                    case TokenKind.Error:
+                        Trace.Assert(false,
+                            ErrorMessage($"{lexer.GetErrorData(tokens[pos].DataIdx)}"));
+                        break;
                     default:
                         Trace.Assert(false,
                             ErrorMessage($"Expected '.', identifier or '}}'"));
@@ -327,7 +342,7 @@ namespace GosharpTemplate
             {
                 return;
             }
-            Trace.Assert(false, ErrorMessage($"expected '{kind}'"));
+            Trace.Assert(false, ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
         }
 
         private Token expectToken(TokenKind kind)
@@ -336,7 +351,7 @@ namespace GosharpTemplate
             {
                 return tokens[pos - 1];
             }
-            Trace.Assert(false, ErrorMessage($"expected '{kind}'"));
+            Trace.Assert(false, ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
             return new Token { };
         }
 
@@ -510,7 +525,7 @@ namespace GosharpTemplate
                     case NodeKind.Expression:
                         {
                             var ident = allIdents[node.DataIdx];
-                            sb.Append(resolveObjectMembers(data, ident).ToString() ?? "");
+                            sb.Append(resolveObjectMembers(data, ident)?.ToString() ?? "");
                         }
                         break;
                     case NodeKind.Html:
@@ -540,9 +555,8 @@ namespace GosharpTemplate
                             var rangeData = allRanges[node.DataIdx];
                             var ident = allIdents[rangeData.IdentIdx];
                             var rangeVariable = resolveObjectMembers(data, ident);
-                            var rangeObjType = rangeVariable.GetType().GetGenericArguments()[0];
                             Trace.Assert(isCollection(rangeVariable),
-                                $"{ident} needs to be IEnumerable to be used as range");
+                                $"{ident} needs to implement ICollection to be used as range");
                             var children = allChildren[rangeData.ChildrenIdx];
                             foreach (var rangeObj in (ICollection)rangeVariable)
                             {
@@ -602,6 +616,7 @@ namespace GosharpTemplate
 
         internal object resolveObjectMembers(object data, string path)
         {
+            // Check if type has allready been resolved
             for (int i = 0; i < resolvedData.obj.Count; i++)
             {
                 if (resolvedData.obj[i] == data)
@@ -610,7 +625,7 @@ namespace GosharpTemplate
                     {
                         return resolvedData.data[i];
                     }
-                } 
+                }
             }
 
             object newData = data;
@@ -630,8 +645,8 @@ namespace GosharpTemplate
                     MemberTypes.Field => type.GetField(ident)?.GetValue(newData),
                     _ => null
                 };
-                Trace.Assert(newData != null, "Object member '{ident}' is null");
             }
+            // store resolved types
             resolvedData.obj.Add(data);
             resolvedData.path.Add(path);
             resolvedData.data.Add(newData);
