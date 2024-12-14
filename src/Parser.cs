@@ -28,6 +28,7 @@ namespace GosharpTemplate
         internal List<Nodes> allChildren;
         internal List<TemplateData> allTemplateCalls;
         internal List<RangeData> allRanges;
+        internal List<WithData> allWiths;
         internal List<BlockData> allBlocks;
         internal List<string> allHtml;
 
@@ -78,6 +79,7 @@ namespace GosharpTemplate
             allChildren = new List<Nodes>();
             allTemplateCalls = new List<TemplateData>();
             allRanges = new List<RangeData>();
+            allWiths = new List<WithData>();
             allBlocks = new List<BlockData>();
             allHtml = new List<string>();
             allRoots = new List<RootData>();
@@ -118,6 +120,7 @@ namespace GosharpTemplate
                 NodeKind.Block => allBlocks[rootNode.DataIdx].ChildrenIdx,
                 NodeKind.Range => allRanges[rootNode.DataIdx].ChildrenIdx,
                 NodeKind.If => allIfs[rootNode.DataIdx].ChildrenIdxTrue,
+                NodeKind.With => allIfs[rootNode.DataIdx].ChildrenIdxTrue,
                 _ => -1
             };
             Trace.Assert(childrenIdx >= 0, ErrorMessage($"{rootNode.Kind}, cant have children"));
@@ -166,6 +169,8 @@ namespace GosharpTemplate
                     return parseElse();
                 case TokenKind.KeywordRange:
                     return parseRange();
+                case TokenKind.KeywordWith:
+                    return parseWith();
                 case TokenKind.KeywordIf:
                     return parseIf();
                 case TokenKind.KeywordBlock:
@@ -212,6 +217,16 @@ namespace GosharpTemplate
             return node;
         }
 
+        private Node parseWith()
+        {
+            var start = pos;
+            expect(TokenKind.KeywordWith);
+            var identIdx = parseIdent().DataIdx;
+            var node = CreateWithNode(start, identIdx);
+            expect(TokenKind.ClosingBraceDouble);
+            parseTemplate(node);
+            return node;
+        }
         private Node parseTemplateCall()
         {
             var start = pos;
@@ -465,6 +480,27 @@ namespace GosharpTemplate
             return node;
         }
 
+        private Node CreateWithNode(int pos, int identIdx)
+        {
+            var childrenIdx = allChildren.Count;
+            allChildren.Add(new Nodes());
+            allChildren.Add(new Nodes());
+            var dataIdx = allWiths.Count;
+            var withData = new WithData
+            {
+                IdentIdx = identIdx,
+                ChildrenIdxTrue = childrenIdx,
+                ChildrenIdxFalse = childrenIdx + 1
+            };
+            allWiths.Add(withData);
+            var node = new Node
+            {
+                Kind = NodeKind.With,
+                TokenIdx = pos,
+                DataIdx = dataIdx
+            };
+            return node;
+        }
         private Node CreateRangeNode(int pos, int identIdx)
         {
             var childrenIdx = allChildren.Count;
@@ -515,7 +551,7 @@ namespace GosharpTemplate
 
         internal string Eval(Node rootNode, object rootData)
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(1024);
             var stack = new Stack<(Node, object)>();
             stack.Push((rootNode, rootData));
             while (stack.Count > 0)
@@ -550,6 +586,22 @@ namespace GosharpTemplate
                             foreach (var child in children)
                             {
                                 stack.Push((child, data));
+                            }
+                        }
+                        break;
+                    case NodeKind.With:
+                        {
+                            var withData = allWiths[node.DataIdx];
+                            var ident = allIdents[withData.IdentIdx];
+                            var withAccessor = resolveObjectMembers(data, ident);
+                            var withVariable = withAccessor.Invoke(data);
+                            var withIsNull = withVariable is null;
+                            var children =  withIsNull?
+                                allChildren[withData.ChildrenIdxFalse]
+                                : allChildren[withData.ChildrenIdxTrue];
+                            foreach (var child in children)
+                            {
+                                stack.Push((child, withIsNull ? data : withVariable));
                             }
                         }
                         break;
@@ -620,6 +672,10 @@ namespace GosharpTemplate
         static bool isCollection(object o) =>
             o.GetType().GetInterfaces().Any(i => i.Name == "ICollection");
 
+        // Compile a lambda function to access a member of a object
+        // Ex: var customer = new { Name = "John", Address = new { Town = "Oslo" }}
+        //     var accessor = GenerateGetterLamda(customer, ".Address.Town")
+        //     Console.WriteLine(accessor.Invoke(customer))  => 'Oslo'
         private static Func<object, object> GenerateGetterLambda(object data, string path)
         {
             try
@@ -839,6 +895,7 @@ namespace GosharpTemplate
         Ident,
         Define,
         Block,
+        With,
         Template,
         Range,
         If,
@@ -902,6 +959,13 @@ namespace GosharpTemplate
     {
         internal string Name;
         internal int IdentIdx;
+    }
+
+    internal struct WithData
+    {
+        internal int IdentIdx;
+        internal int ChildrenIdxTrue;
+        internal int ChildrenIdxFalse;
     }
 
     internal struct RangeData

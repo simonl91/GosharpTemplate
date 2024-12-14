@@ -144,6 +144,8 @@ namespace GosharpTemplate
                     return TokenKind.KeywordDefine;
                 case "block":
                     return TokenKind.KeywordBlock;
+                case "with":
+                    return TokenKind.KeywordWith;
                 case "template":
                     return TokenKind.KeywordTemplate;
                 case "end":
@@ -365,6 +367,7 @@ namespace GosharpTemplate
         Eof,
         KeywordDefine,
         KeywordBlock,
+        KeywordWith,
         KeywordIf,
         KeywordElse,
         KeywordTemplate,

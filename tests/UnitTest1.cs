@@ -25,6 +25,43 @@ public class Tests
         var result = template.ExecuteTemplate("T", data);
     }
 
+    struct WithPageData 
+    {
+        public string Title;
+        public string OtherTitle;
+    }
+    [Test]
+    public void WithTest()
+    {
+        var template  = new Template();
+        template.ParseFiles("../../../TestFiles/with.html");
+        var withTitle = template.ExecuteTemplate("with.html",
+            new WithPageData {
+                Title = "Title",
+                OtherTitle = "OtherTitle"
+            }
+        );
+        var withOtherTitle = template.ExecuteTemplate("with.html",
+            new WithPageData{
+                Title = null,
+                OtherTitle = "OtherTitle"
+            }
+        );
+        var withoutTitle = template.ExecuteTemplate("with.html",
+            new WithPageData{
+                Title = null,
+                OtherTitle = null
+            }
+        );
+
+        Assert.That("<h1>Title<h1>",
+            Is.EqualTo(withTitle));
+        Assert.That("<h1>OtherTitle<h1>",
+            Is.EqualTo(withOtherTitle));
+        Assert.That("<h1>Nothing<h1>",
+            Is.EqualTo(withoutTitle));
+    }
+
 
     [Test]
     public void TestSmallBlockTemplate()
