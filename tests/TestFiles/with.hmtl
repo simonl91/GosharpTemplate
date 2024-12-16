@@ -1,9 +1,0 @@
-{{with .Title }}
-    <h1>{{.}}</h1>
-{{else}}
-    {{with .OtherTitle}}
-    <h1>{{.}}</h1>
-    {{else}}
-    <h1>Nothing</h1>
-    {{end}}
-{{end}}

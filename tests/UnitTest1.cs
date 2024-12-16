@@ -23,43 +23,72 @@ public class Tests
         template.Parse("foo", @"{{define ""T""}}Hello, {{.FirstName}} {{.LastName}}!{{end}}");
         var data = new { FirstName = "John", LastName = "Johnson" };
         var result = template.ExecuteTemplate("T", data);
+        Assert.That(result, 
+            Is.EqualTo("Hello, John Johnson!"));
     }
 
-    struct WithPageData 
+    struct WithPageData
     {
         public string Title;
         public string OtherTitle;
     }
     [Test]
+    public void Example2Test()
+    {
+        var template = new Template();
+        template.ParseFiles("../../../TestFiles/TextFile1.txt");
+        var result = template.ExecuteTemplate("TextFile1.txt",
+            new 
+            {
+                Name = "Aunt Mildred",
+                Gift = "bone china tea set",
+                Attended = true 
+            }
+        );
+        Assert.That(result,
+            Is.EqualTo(@"Dear Aunt Mildred,
+
+It was a pleasure to see you at the wedding.
+Thank you for the lovely bone china tea set.
+
+Best wishes,
+Josie"
+        ));
+    }
+
+    [Test]
     public void WithTest()
     {
-        var template  = new Template();
+        var template = new Template();
         template.ParseFiles("../../../TestFiles/with.html");
         var withTitle = template.ExecuteTemplate("with.html",
-            new WithPageData {
+            new WithPageData
+            {
                 Title = "Title",
                 OtherTitle = "OtherTitle"
             }
         );
         var withOtherTitle = template.ExecuteTemplate("with.html",
-            new WithPageData{
+            new WithPageData
+            {
                 Title = null,
                 OtherTitle = "OtherTitle"
             }
         );
         var withoutTitle = template.ExecuteTemplate("with.html",
-            new WithPageData{
+            new WithPageData
+            {
                 Title = null,
                 OtherTitle = null
             }
         );
 
-        Assert.That("<h1>Title<h1>",
-            Is.EqualTo(withTitle));
-        Assert.That("<h1>OtherTitle<h1>",
-            Is.EqualTo(withOtherTitle));
-        Assert.That("<h1>Nothing<h1>",
-            Is.EqualTo(withoutTitle));
+        Assert.That(withTitle,
+            Is.EqualTo("<h1>Title</h1>"));
+        Assert.That(withOtherTitle,
+            Is.EqualTo("<h1>OtherTitle</h1>"));
+        Assert.That(withoutTitle,
+            Is.EqualTo("<h1>Nothing</h1>"));
     }
 
 

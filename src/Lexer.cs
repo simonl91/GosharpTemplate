@@ -38,18 +38,21 @@ namespace GosharpTemplate
                 if (isAtEnd())
                 {
                     if (currentLength() > 0)
-                        tokens.Add(makeToken(TokenKind.Html, start, current - 1));
+                        tokens.Add(makeToken(TokenKind.Html, start, current));
                     tokens.Add(makeToken(TokenKind.Eof));
                     return tokens;
                 }
                 if (isAtOpenBraceDouble())
                 {
+                    // Tokenize everyting before '{{' as html
                     if (currentLength() > 0)
                         tokens.Add(makeToken(TokenKind.Html, start, current));
                     start = current;
+                    // Advance over opening bracket
                     advance();
                     advance();
                     tokens.Add(makeToken(TokenKind.OpenBraceDouble));
+                    // Tokenize from '{{' to '}}'
                     LexTemplateExpression();
                     start = current;
                     if (isAtEnd())
@@ -104,6 +107,11 @@ namespace GosharpTemplate
                 if (char.IsLetter(c) || c == '_')
                 {
                     tokens.Add(createIdentifier());
+                    continue;
+                }
+                if (c == '-')
+                {
+                    tokens.Add(makeToken(TokenKind.Dash));
                     continue;
                 }
                 if (c == '.')
@@ -203,7 +211,6 @@ namespace GosharpTemplate
                 "Expected string token");
             return text.Substring(token.Start + 1, token.Length - 2);
         }
-
         private Token createString()
         {
             while (peek() != '"' && !isAtEnd())
@@ -365,6 +372,7 @@ namespace GosharpTemplate
         String,
         Error,
         Eof,
+        Dash,
         KeywordDefine,
         KeywordBlock,
         KeywordWith,

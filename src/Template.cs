@@ -1,6 +1,7 @@
 using System.IO;
 using System.Diagnostics;
 using System.Text;
+using System;
 
 namespace GosharpTemplate
 {
@@ -42,8 +43,9 @@ namespace GosharpTemplate
             files = new string[filesPaths.Length];
             for (var i = 0; i < filesPaths.Length; i++)
             {
-                Trace.Assert(File.Exists(filesPaths[i]));
-                fileNames[i] = Path.GetFileName(filesPaths[i]);
+                var fileName = Path.GetFileName(filesPaths[i]);
+                Trace.Assert(File.Exists(filesPaths[i]), $"File '{fileName}' does not exist.");
+                fileNames[i] = fileName;
                 files[i] = File.ReadAllText(filesPaths[i]);
             }
             for (var i = 0; i < files.Length; i++)

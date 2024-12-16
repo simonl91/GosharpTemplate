@@ -120,7 +120,7 @@ namespace GosharpTemplate
                 NodeKind.Block => allBlocks[rootNode.DataIdx].ChildrenIdx,
                 NodeKind.Range => allRanges[rootNode.DataIdx].ChildrenIdx,
                 NodeKind.If => allIfs[rootNode.DataIdx].ChildrenIdxTrue,
-                NodeKind.With => allIfs[rootNode.DataIdx].ChildrenIdxTrue,
+                NodeKind.With => allWiths[rootNode.DataIdx].ChildrenIdxTrue,
                 _ => -1
             };
             Trace.Assert(childrenIdx >= 0, ErrorMessage($"{rootNode.Kind}, cant have children"));
@@ -161,6 +161,7 @@ namespace GosharpTemplate
         private Node parseExpression()
         {
             expect(TokenKind.OpenBraceDouble);
+            eat(TokenKind.Dash);
             switch (nth(0))
             {
                 case TokenKind.KeywordEnd:
@@ -182,6 +183,7 @@ namespace GosharpTemplate
                 case TokenKind.Dot:
                     var identNode = parseIdent();
                     identNode.Kind = NodeKind.Expression;
+                    eat(TokenKind.Dash);
                     expect(TokenKind.ClosingBraceDouble);
                     return identNode;
                 case TokenKind.Error:
@@ -201,6 +203,7 @@ namespace GosharpTemplate
             expect(TokenKind.KeywordIf);
             var identIdx = parseIdent().DataIdx;
             var node = CreateIfNode(start, identIdx);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             parseTemplate(node);
             return node;
@@ -212,6 +215,7 @@ namespace GosharpTemplate
             expect(TokenKind.KeywordRange);
             var identIdx = parseIdent().DataIdx;
             var node = CreateRangeNode(start, identIdx);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             parseTemplate(node);
             return node;
@@ -223,6 +227,7 @@ namespace GosharpTemplate
             expect(TokenKind.KeywordWith);
             var identIdx = parseIdent().DataIdx;
             var node = CreateWithNode(start, identIdx);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             parseTemplate(node);
             return node;
@@ -238,6 +243,7 @@ namespace GosharpTemplate
                 identIdx = parseIdent().DataIdx;
             }
             var node = CreateTemplateNode(lexer.GetTextFromStringToken(stringToken), start, identIdx);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             return node;
         }
@@ -253,6 +259,7 @@ namespace GosharpTemplate
                 identIdx = parseIdent().DataIdx;
             }
             var node = CreateBlockNode(lexer.GetTextFromStringToken(stringToken), identIdx, start);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             parseTemplate(node);
             return node;
@@ -263,6 +270,7 @@ namespace GosharpTemplate
             var start = pos;
             expect(TokenKind.KeywordDefine);
             var stringToken = expectToken(TokenKind.String);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             var node = CreateDefineNode(lexer.GetTextFromStringToken(stringToken), start);
             parseTemplate(node);
@@ -280,6 +288,8 @@ namespace GosharpTemplate
             {
                 switch (nth(0))
                 {
+                    case TokenKind.Dash:
+                        break;
                     case TokenKind.Dot:
                         sb.Append(".");
                         break;
@@ -305,6 +315,7 @@ namespace GosharpTemplate
         {
             var curPos = pos;
             expect(TokenKind.KeywordEnd);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             return CreateNodeAt(curPos, NodeKind.End);
         }
@@ -313,6 +324,7 @@ namespace GosharpTemplate
         {
             var curPos = pos;
             expect(TokenKind.KeywordElse);
+            eat(TokenKind.Dash);
             expect(TokenKind.ClosingBraceDouble);
             return CreateNodeAt(curPos, NodeKind.Else);
         }
@@ -375,7 +387,12 @@ namespace GosharpTemplate
         private Node CreateHtmlNode()
         {
             var dataIdx = allHtml.Count;
-            allHtml.Add(lexer.GetText(tokens[pos]));
+            var html = lexer.GetText(tokens[pos]);
+            if (0 <= (pos -2) && tokens[pos-2].Kind == TokenKind.Dash)
+                html = html.TrimStart();
+            if (pos + 2 < tokens.Count && tokens[pos + 2].Kind == TokenKind.Dash)
+                html = html.TrimEnd();
+            allHtml.Add(html);
             return new Node
             {
                 Kind = NodeKind.Html,
@@ -583,9 +600,9 @@ namespace GosharpTemplate
                             var children = (bool)ifVariable ?
                                 allChildren[ifData.ChildrenIdxTrue]
                                 : allChildren[ifData.ChildrenIdxFalse];
-                            foreach (var child in children)
+                            for (var i = children.Count - 1; i >= 0; i--)
                             {
-                                stack.Push((child, data));
+                                stack.Push((children[i], data));
                             }
                         }
                         break;
@@ -595,13 +612,13 @@ namespace GosharpTemplate
                             var ident = allIdents[withData.IdentIdx];
                             var withAccessor = resolveObjectMembers(data, ident);
                             var withVariable = withAccessor.Invoke(data);
-                            var withIsNull = withVariable is null;
-                            var children =  withIsNull?
+                            var varIsNull = withVariable is null;
+                            var children =  varIsNull?
                                 allChildren[withData.ChildrenIdxFalse]
                                 : allChildren[withData.ChildrenIdxTrue];
-                            foreach (var child in children)
+                            for (var i = children.Count - 1; i >= 0; i--)
                             {
-                                stack.Push((child, withIsNull ? data : withVariable));
+                                stack.Push((children[i], varIsNull ? data : withVariable));
                             }
                         }
                         break;
