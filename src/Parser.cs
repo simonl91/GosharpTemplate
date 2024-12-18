@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Reflection;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -33,12 +32,12 @@ namespace GosharpTemplate
         internal List<string> allHtml;
 
         internal DataAccessors accessors;
-        //internal List<(object, string, object)> resolvedData;
 
-        //private List<string> errors;
         private List<Token> tokens;
         private int pos;
         private Lexer lexer;
+
+        private string rootName;
 
 #pragma warning disable 8618
         public Parser()
@@ -283,7 +282,6 @@ namespace GosharpTemplate
             var node = CreateIdentNode();
             var sb = new StringBuilder();
             sb.Append(".");
-            //allIdents[node.DataIdx].Add(".");
             while (!at(TokenKind.ClosingBraceDouble))
             {
                 switch (nth(0))

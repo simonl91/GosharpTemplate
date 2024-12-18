@@ -1,30 +1,33 @@
 # GosharpTemplate
-This is a lightweight, dependency free, feature incomplete, **NOT** production ready Go-style HTML templating library.
+This is a lightweight, fast, dependency free, feature incomplete, not production ready Go-style templating library.
 
 ![Example 1](https://raw.githubusercontent.com/simonl91/GosharpTemplate/refs/heads/main/img/usage_example.png)
 
 ![Result 1](https://raw.githubusercontent.com/simonl91/GosharpTemplate/refs/heads/main/img/usage_example_result.png)
 
-## Security
-#### Injection
-Templates are not injection safe at the moment.
-It is assumed that the template author and the data is trusted.
-You can sanitize the data your self using something like:
-System.Web.HttpUtility.HtmlEncode / .HtmlAttributeEncode / .UrlEncode.
-
-#### Runtime Errors
-The current error model is to crash if something is wrong.
-
 ## Supported features so far:
+- '-' to trim whitespace
 - define
 - block
 - template
-- data parameters
+- pipelines
+    - Only data member access ex: 
+      ```.Title```. or ```.Address.Street```
+    - No function or method calls
+      I do not like i when the templates starts to look like code. Keep It Simple.
+- when
 - range
-    - continue and break are not implemented yet
+    - continue and break is NOT implemented yet
 - Simple if statements 
     - Only supports a boolean variable as condition
-    - {{else if}} is currently not supported
+    - {{else if}} is currently not supported, use nested ifs if needed.
+
+## Security Warning
+#### Injection
+Templates are not injection safe.
+It is assumed that the template author and the data is trusted.
+If you are using this for HTML you can sanitize the data your self using something like:
+System.Web.HttpUtility.HtmlEncode / .HtmlAttributeEncode / .UrlEncode.
 
 ## Contribute
 This is a hobby/learning project, and i have limited time to work on this.
