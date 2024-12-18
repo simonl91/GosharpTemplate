@@ -47,6 +47,7 @@ namespace GosharpTemplate
 
         internal void Parse(Lexer lex, string rootName)
         {
+            this.rootName = rootName;
             pos = tokens.Count;
             lexer = lex;
             tokens.AddRange(lex.Lex());
@@ -60,7 +61,7 @@ namespace GosharpTemplate
                 {
                     errorBuilder.AppendLine(lexer.GetErrorData(errorToken.DataIdx));
                 }
-                Trace.Fail(errorBuilder.ToString());
+                throw new ArgumentException(errorBuilder.ToString());
             }
 
             var tree = CreateRootNode(rootName);
@@ -105,7 +106,7 @@ namespace GosharpTemplate
             var line = lexer.GetLine(token.Start);
             var col = lexer.GetColumn(token.Start);
             var col2 = col + System.Math.Abs(token.Length - 1);
-            sb.AppendLine($"Error at {line} {col}-{col2} '{lexer.GetText(token)}': ");
+            sb.AppendLine($"Error in '{rootName}' at {line} {col}-{col2} '{lexer.GetText(token)}': ");
             sb.AppendLine(message);
             return sb.ToString();
         }
@@ -122,7 +123,7 @@ namespace GosharpTemplate
                 NodeKind.With => allWiths[rootNode.DataIdx].ChildrenIdxTrue,
                 _ => -1
             };
-            Trace.Assert(childrenIdx >= 0, ErrorMessage($"{rootNode.Kind}, cant have children"));
+            Debug.Assert(childrenIdx >= 0, ErrorMessage($"{rootNode.Kind}, cant have children"));
 
             for (int i = 0; i < tokens.Count; i++)
             {
@@ -145,14 +146,9 @@ namespace GosharpTemplate
                         break;
                     case TokenKind.Eof:
                         return;
-                    case TokenKind.Error:
-                        Trace.Assert(false,
-                            ErrorMessage($"{lexer.GetErrorData(tokens[pos].DataIdx)}"));
-                        return;
                     default:
-                        Trace.Assert(false,
+                        throw new Exception(
                             ErrorMessage($"Unexpedted token {nth(0)}, expected Html or '{{'"));
-                        return;
                 }
             }
         }
@@ -185,14 +181,8 @@ namespace GosharpTemplate
                     eat(TokenKind.Dash);
                     expect(TokenKind.ClosingBraceDouble);
                     return identNode;
-                case TokenKind.Error:
-                    Trace.Assert(false,
-                        ErrorMessage($"{lexer.GetErrorData(tokens[pos].DataIdx)}"));
-                    return new Node();
                 default:
-                    Trace.Assert(false,
-                        ErrorMessage($"not a valid expression"));
-                    return new Node();
+                    throw new Exception(ErrorMessage($"not a valid expression"));
             }
         }
 
@@ -294,14 +284,8 @@ namespace GosharpTemplate
                     case TokenKind.Ident:
                         sb.Append(lexer.GetText(tokens[pos]));
                         break;
-                    case TokenKind.Error:
-                        Trace.Assert(false,
-                            ErrorMessage($"{lexer.GetErrorData(tokens[pos].DataIdx)}"));
-                        break;
                     default:
-                        Trace.Assert(false,
-                            ErrorMessage($"Expected '.', identifier or '}}'"));
-                        break;
+                        throw new Exception(ErrorMessage($"Expected '.', identifier or '}}'"));
                 }
                 advance();
             }
@@ -329,7 +313,7 @@ namespace GosharpTemplate
 
         private void advance()
         {
-            Trace.Assert(!eof());
+            Debug.Assert(!eof());
             pos += 1;
         }
 
@@ -368,7 +352,7 @@ namespace GosharpTemplate
             {
                 return;
             }
-            Trace.Assert(false, ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
+            throw new Exception(ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
         }
 
         private Token expectToken(TokenKind kind)
@@ -377,8 +361,7 @@ namespace GosharpTemplate
             {
                 return tokens[pos - 1];
             }
-            Trace.Assert(false, ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
-            return new Token { };
+            throw new Exception(ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
         }
 
 
@@ -593,8 +576,9 @@ namespace GosharpTemplate
                             var ident = allIdents[ifData.IdentIdx];
                             var ifAccessor = resolveObjectMembers(data, ident);
                             var ifVariable = ifAccessor.Invoke(data);
-                            Trace.Assert(ifVariable.GetType() == typeof(bool),
-                                $"expected boolean, got {ifVariable.GetType()}");
+                            if (ifVariable.GetType() != typeof(bool))
+                                throw new ArgumentException(
+                                    $"expected boolean, got {ifVariable.GetType()}");
                             var children = (bool)ifVariable ?
                                 allChildren[ifData.ChildrenIdxTrue]
                                 : allChildren[ifData.ChildrenIdxFalse];
@@ -626,8 +610,9 @@ namespace GosharpTemplate
                             var ident = allIdents[rangeData.IdentIdx];
                             var rangeAccessor = resolveObjectMembers(data, ident);
                             var rangeVariable = rangeAccessor.Invoke(data);
-                            Trace.Assert(isCollection(rangeVariable),
-                                $"{ident} needs to implement ICollection to be used as range");
+                            if (!isCollection(rangeVariable))
+                                throw new ArgumentException(
+                                    $"{ident} needs to implement ICollection to be used in range expression");
                             var children = allChildren[rangeData.ChildrenIdx];
                             foreach (var rangeObj in (ICollection)rangeVariable)
                             {
@@ -680,41 +665,34 @@ namespace GosharpTemplate
             if (idx > -1) return allDefines[idx].ChildrenIdx;
             idx = allBlocks.FindIndex(x => x.Name == name);
             if (idx > -1) return allBlocks[idx].ChildrenIdx;
-            Trace.Assert(false, $"Template '{name}' was not found");
-            return -1;
+            throw new ArgumentException($"Template '{name}' was not found");
         }
 
         static bool isCollection(object o) =>
             o.GetType().GetInterfaces().Any(i => i.Name == "ICollection");
 
-        // Compile a lambda function to access a member of a object
-        // Ex: var customer = new { Name = "John", Address = new { Town = "Oslo" }}
-        //     var accessor = GenerateGetterLamda(customer, ".Address.Town")
-        //     Console.WriteLine(accessor.Invoke(customer))  => 'Oslo'
+        /// <summary>
+        /// Compile a lambda function to access a member of a object.
+        /// Ex: var customer = new { Name = "John", Address = new { Town = "Oslo" }}
+        ///     var accessor = GenerateGetterLamda(customer, ".Address.Town")
+        ///     Console.WriteLine(accessor.Invoke(customer))  => 'Oslo'
+        /// </summary>
         private static Func<object, object> GenerateGetterLambda(object data, string path)
         {
-            try
+            var objParameterExpr = Expression.Parameter(typeof(object), "instance");
+            var instanceExpr = Expression.Convert(objParameterExpr, data.GetType());
+
+            Expression current = instanceExpr;
+
+            foreach (var propertyName in path.Split('.'))
             {
-                var objParameterExpr = Expression.Parameter(typeof(object), "instance");
-                var instanceExpr = Expression.Convert(objParameterExpr, data.GetType());
-
-                Expression current = instanceExpr;
-
-                foreach (var propertyName in path.Split('.'))
-                {
-                    if (string.IsNullOrEmpty(propertyName)) continue;
-                    current = Expression.PropertyOrField(current, propertyName);
-                }
-
-                current = Expression.Convert(current, typeof(object));
-
-                return Expression.Lambda<Func<object, object>>(current, objParameterExpr).Compile();
+                if (string.IsNullOrEmpty(propertyName)) continue;
+                current = Expression.PropertyOrField(current, propertyName);
             }
-            catch (Exception ex)
-            {
-                Trace.Fail(ex.Message);
-                return (x) => x; // unreachable
-            }
+
+            current = Expression.Convert(current, typeof(object));
+
+            return Expression.Lambda<Func<object, object>>(current, objParameterExpr).Compile();
         } 
 
         internal Func<object, object> resolveObjectMembers(object data, string path)

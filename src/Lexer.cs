@@ -65,8 +65,7 @@ namespace GosharpTemplate
                 var c = advance();
                 if (c == '\n') newlineIndicies.Add(current - 1);
             }
-            Trace.Assert(false, "unreachable!");
-            return tokens;
+            throw new ApplicationException("should be unreachable");
         }
 
         internal void PrintToken(Token token)
@@ -207,7 +206,7 @@ namespace GosharpTemplate
 
         internal string GetTextFromStringToken(Token token)
         {
-            Trace.Assert(token.Kind == TokenKind.String,
+            Debug.Assert(token.Kind == TokenKind.String,
                 "Expected string token");
             return text.Substring(token.Start + 1, token.Length - 2);
         }

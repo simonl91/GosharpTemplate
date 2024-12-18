@@ -44,7 +44,8 @@ namespace GosharpTemplate
             for (var i = 0; i < filesPaths.Length; i++)
             {
                 var fileName = Path.GetFileName(filesPaths[i]);
-                Trace.Assert(File.Exists(filesPaths[i]), $"File '{fileName}' does not exist.");
+                if (!File.Exists(filesPaths[i]))
+                    throw new ArgumentException($"File '{fileName}' does not exist.");
                 fileNames[i] = fileName;
                 files[i] = File.ReadAllText(filesPaths[i]);
             }
@@ -80,6 +81,7 @@ namespace GosharpTemplate
         /// <param name="name"></param>
         /// <param name="data"></param>
         /// <returns>string representation of the evaluated template</returns>
+        /// <exception cref="Exception" />
         public string ExecuteTemplate(string name, object data)
         {
             var childrenIdx = parser.findTemplateChildrenIdx(name);
@@ -93,6 +95,40 @@ namespace GosharpTemplate
         }
 
 
+        /// <summary>
+        /// Search for a template/define/block with the name: <paramref name="name"/>.<br/>
+        /// Evaluate the parsed template with the parameter <paramref name="data"/>. <br/>
+        /// This method uses go-style error handling, use ExecuteTemplate if you prefer exceptions.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="data"></param>
+        /// <returns>
+        /// 1: string of the evaluated template<br/>
+        /// 2: string with error message.
+        /// <code>
+        /// var (result, err) = template.ExecuteTemplateErr("foo", data);
+        /// if (err != null) return; //handle error
+        /// await context.WriteAsync(result);
+        /// </code>
+        /// </returns>
+        public (string, string) ExecuteTemplateErr(string name, object data)
+        {
+            try
+            {
+                var childrenIdx = parser.findTemplateChildrenIdx(name);
+                var children = parser.allChildren[childrenIdx];
+                var sb = new StringBuilder(4000);
+                foreach (var child in children)
+                {
+                    sb.Append(parser.Eval(child, data));
+                }
+                return (sb.ToString(), null);
+            }
+            catch (Exception e)
+            {
+                return (null, e.Message);
+            }
+        }
 
     }
 
