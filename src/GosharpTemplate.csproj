@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>GosharpTemplate</Title>
     <Authors>Simon Langlo</Authors>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <Description>Go-style templating library for c#</Description>
     <Copyright>Simon Langlo</Copyright>
     <PackageProjectUrl>https://github.com/simonl91/GosharpTemplate</PackageProjectUrl>
@@ -16,8 +16,8 @@
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <IncludeSymbols>True</IncludeSymbols>
-    <PackageReleaseNotes>Faster execution by using compiled lambdas to access members.
-Fix some error reporting.</PackageReleaseNotes>
+    <PackageReleaseNotes>Added  when expressions.
+Errors now throw exceptions.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

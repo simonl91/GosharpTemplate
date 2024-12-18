@@ -20,7 +20,7 @@ This is a lightweight, fast, dependency free, feature incomplete, not production
     - continue and break is NOT implemented yet
 - Simple if statements 
     - Only supports a boolean variable as condition
-    - {{else if}} is currently not supported, use nested ifs if needed.
+    - {{else if}} is currently not supported, use nested ifs if needed:
 
 ## Security Warning
 #### Injection
