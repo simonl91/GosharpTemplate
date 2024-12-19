@@ -15,7 +15,7 @@ This is a lightweight, fast, dependency free, feature incomplete, not production
       ```.Title```. or ```.Address.Street```
     - No function or method calls
       I do not like i when the templates starts to look like code. Keep It Simple.
-- when
+- with
 - range
     - continue and break is NOT implemented yet
 - Simple if statements 
