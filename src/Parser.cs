@@ -9,6 +9,7 @@ namespace GosharpTemplate
     using System.Text;
     using System;
     using System.Linq.Expressions;
+    using System.Diagnostics.CodeAnalysis;
 
     internal struct DataAccessors
     {
@@ -592,21 +593,9 @@ namespace GosharpTemplate
                         {
                             var withData = allWiths[node.DataIdx];
                             var ident = allIdents[withData.IdentIdx];
-                            object withVariable;
-                            bool varIsNull;
-                            // special case: check for null on "." ident here
-                            // because resolveObjectMembers does not work on null
-                            if (ident == "." && data is null)
-                            {
-                                withVariable = null;
-                                varIsNull = true;
-                            }
-                            else
-                            {
-                                var withAccessor = resolveObjectMembers(data, ident);
-                                withVariable = withAccessor.Invoke(data);
-                                varIsNull = withVariable is null;
-                            }
+                            var withAccessor = resolveObjectMembers(data, ident);
+                            var withVariable = withAccessor.Invoke(data);
+                            var varIsNull = withVariable is null;
                             var children =  varIsNull?
                                 allChildren[withData.ChildrenIdxFalse]
                                 : allChildren[withData.ChildrenIdxTrue];
@@ -709,6 +698,8 @@ namespace GosharpTemplate
 
         internal Func<object, object> resolveObjectMembers(object data, string path)
         {
+            if (data is null && path == ".")
+                return (x) => null;
             var typ = data.GetType();
             // Check if type has allready been resolved
             for (int i = 0; i < accessors.Types.Count; i++)
