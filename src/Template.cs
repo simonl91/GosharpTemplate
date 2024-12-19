@@ -71,7 +71,7 @@ namespace GosharpTemplate
         public void Parse(string name, string text)
         {
             var lexer = new Lexer(ref text);
-            parser.Parse(lexer, "root");
+            parser.Parse(lexer, name);
         }
 
         /// <summary>
