@@ -592,9 +592,21 @@ namespace GosharpTemplate
                         {
                             var withData = allWiths[node.DataIdx];
                             var ident = allIdents[withData.IdentIdx];
-                            var withAccessor = resolveObjectMembers(data, ident);
-                            var withVariable = withAccessor.Invoke(data);
-                            var varIsNull = withVariable is null;
+                            object withVariable;
+                            bool varIsNull;
+                            // special case: check for null on "." ident here
+                            // because resolveObjectMembers does not work on null
+                            if (ident == "." && data is null)
+                            {
+                                withVariable = null;
+                                varIsNull = true;
+                            }
+                            else
+                            {
+                                var withAccessor = resolveObjectMembers(data, ident);
+                                withVariable = withAccessor.Invoke(data);
+                                varIsNull = withVariable is null;
+                            }
                             var children =  varIsNull?
                                 allChildren[withData.ChildrenIdxFalse]
                                 : allChildren[withData.ChildrenIdxTrue];

@@ -83,12 +83,23 @@ Josie"
             }
         );
 
+        var template2 = new Template();
+        template2.Parse("test",
+            @"{{with .}}
+                  <p>Unreachable</p>
+              {{end}}");
+        var passNullToWithDirectly =
+            template2.ExecuteTemplate("test", null);
+
+
         Assert.That(withTitle,
             Is.EqualTo("<h1>Title</h1>"));
         Assert.That(withOtherTitle,
             Is.EqualTo("<h1>OtherTitle</h1>"));
         Assert.That(withoutTitle,
             Is.EqualTo("<h1>Nothing</h1>"));
+        Assert.That(passNullToWithDirectly,
+            Is.EqualTo(""));
     }
 
 
