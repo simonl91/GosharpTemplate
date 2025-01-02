@@ -370,7 +370,7 @@ namespace GosharpTemplate
         {
             var dataIdx = allHtml.Count;
             var html = lexer.GetText(tokens[pos]);
-            if (0 <= (pos -2) && tokens[pos-2].Kind == TokenKind.Dash)
+            if (0 <= (pos - 2) && tokens[pos - 2].Kind == TokenKind.Dash)
                 html = html.TrimStart();
             if (pos + 2 < tokens.Count && tokens[pos + 2].Kind == TokenKind.Dash)
                 html = html.TrimEnd();
@@ -596,7 +596,7 @@ namespace GosharpTemplate
                             var withAccessor = resolveObjectMembers(data, ident);
                             var withVariable = withAccessor.Invoke(data);
                             var varIsNull = withVariable is null;
-                            var children =  varIsNull?
+                            var children = varIsNull ?
                                 allChildren[withData.ChildrenIdxFalse]
                                 : allChildren[withData.ChildrenIdxTrue];
                             for (var i = children.Count - 1; i >= 0; i--)
