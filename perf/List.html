@@ -1,0 +1,50 @@
+{{define "table"}}
+<table>
+    <thead>
+        <tr>
+            <td>
+                Id
+            </td>
+            <td>
+                Name
+            </td>
+            <td>
+                Valid
+            </td>
+            <td>
+                Description
+            </td>
+            <td>
+                Count
+            </td>
+            <td>
+                Price
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .}}
+        <tr>
+            <td>
+                {{ .Id }}
+            </td>
+            <td>
+                {{ .Name }}
+            </td>
+            <td>
+                {{ .Valid }}
+            </td>
+            <td>
+                {{ .Description }}
+            </td>
+            <td>
+                {{ .Count }}
+            </td>
+            <td>
+                {{ .Price }}
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}
