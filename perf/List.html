@@ -24,6 +24,7 @@
     </thead>
     <tbody>
         {{range .}}
+        {{block "tableRow"}}
         <tr>
             <td>
                 {{ .Id }}
@@ -44,6 +45,7 @@
                 {{ .Price }}
             </td>
         </tr>
+        {{end}}
         {{end}}
     </tbody>
 </table>

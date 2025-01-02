@@ -9,7 +9,6 @@ namespace GosharpTemplate
     using System.Text;
     using System;
     using System.Linq.Expressions;
-    using System.Diagnostics.CodeAnalysis;
 
     internal struct DataAccessors
     {
@@ -551,7 +550,7 @@ namespace GosharpTemplate
         internal string Eval(Node rootNode, object rootData)
         {
             var sb = new StringBuilder(1024);
-            var stack = new Stack<(Node, object)>();
+            var stack = new Stack<(Node, object)>(1024);
             stack.Push((rootNode, rootData));
             while (stack.Count > 0)
             {
@@ -694,7 +693,7 @@ namespace GosharpTemplate
             current = Expression.Convert(current, typeof(object));
 
             return Expression.Lambda<Func<object, object>>(current, objParameterExpr).Compile();
-        } 
+        }
 
         internal Func<object, object> resolveObjectMembers(object data, string path)
         {
@@ -706,7 +705,7 @@ namespace GosharpTemplate
             {
                 if (accessors.Types[i] == typ)
                 {
-                    if (accessors.Paths[i].Equals(path))
+                    if (accessors.Paths[i] == path)
                     {
                         return accessors.Accessors[i];
                     }
