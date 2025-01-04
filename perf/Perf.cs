@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 public class Perf
 {
-    const int RUNS = 10_000;
+    const int RUNS = 1000;
 
     public static void Main(params string[] args)
     {
