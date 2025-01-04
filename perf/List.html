@@ -24,7 +24,7 @@
     </thead>
     <tbody>
         {{range .}}
-        {{block "tableRow"}}
+        {{block "tableRow" .}}
         <tr>
             <td>
                 {{ .Id }}
