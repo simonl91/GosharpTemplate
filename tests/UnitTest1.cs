@@ -86,7 +86,10 @@ Josie"
         var template2 = new Template();
         template2.Parse("test",
             @"{{with .}}
-                  <p>Unreachable</p>
+                  {{range .}}
+                      {{.}}
+                      <p>Unreachable</p>
+                  {{end}}
               {{end}}");
         var passNullToWithDirectly =
             template2.ExecuteTemplate("test", null);
