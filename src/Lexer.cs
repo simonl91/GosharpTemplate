@@ -137,7 +137,13 @@ namespace GosharpTemplate
 
         private Token CreateIdentifier()
         {
-            while (char.IsLetterOrDigit(Peek()) || Peek() == '_') Advance();
+            while (
+                char.IsLetterOrDigit(Peek()) || 
+                Peek() == '_' ||
+                Peek() == '[' ||
+                Peek() == ']'
+            ) Advance();
+
             var identType = IdentifierType();
             return MakeToken(identType);
         }

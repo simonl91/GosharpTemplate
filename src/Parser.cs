@@ -676,7 +676,23 @@ namespace GosharpTemplate
             foreach (var propertyName in path.Split('.'))
             {
                 if (string.IsNullOrEmpty(propertyName)) continue;
-                current = Expression.PropertyOrField(current, propertyName);
+                var openBracket = propertyName.LastIndexOf('[');
+                var closingBracket = propertyName.LastIndexOf(']');
+
+                // Check and perform array access
+                if (openBracket > 0 && closingBracket > 0)
+                {
+                    var propertyNameStr  = propertyName.Substring(0, openBracket);
+                    var indexString = propertyName.Substring(openBracket + 1, closingBracket - openBracket - 1);
+                    int.TryParse(indexString, out var index);
+                    current = Expression.PropertyOrField(current, propertyNameStr);
+                    current = Expression.ArrayIndex(current, Expression.Constant(index));
+                }
+                // Normal case
+                else 
+                { 
+                    current = Expression.PropertyOrField(current, propertyName);
+                }
             }
 
             current = Expression.Convert(current, typeof(object));
@@ -862,6 +878,7 @@ namespace GosharpTemplate
             return sb.ToString();
         }
     }
+
 
     internal enum NodeKind
     {

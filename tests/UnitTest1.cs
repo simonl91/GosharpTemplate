@@ -105,6 +105,23 @@ Josie"
             Is.EqualTo(""));
     }
 
+    [Test]
+    public void TestArrayAccess()
+    {
+        var data = new {
+            Customers = new[] {
+                new { Name = "Customer0" },
+                new { Name = "Customer1" },
+                new { Name = "Customer2" }
+            }
+        };
+        var templString = @"{{.Customers[2].Name}}";
+        var template = new Template();
+        template.Parse("root", templString);
+        var result = template.ExecuteTemplate("root", data);
+        Assert.That(result,
+            Is.EqualTo("Customer2"));
+    }
 
     [Test]
     public void TestSmallBlockTemplate()
