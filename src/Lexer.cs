@@ -35,34 +35,34 @@ namespace GosharpTemplate
             // consume everything as html until end or '{{'
             for (int i = 0; i < text.Length; i++)
             {
-                if (isAtEnd())
+                if (IsAtEnd())
                 {
-                    if (currentLength() > 0)
-                        tokens.Add(makeToken(TokenKind.Html, start, current));
-                    tokens.Add(makeToken(TokenKind.Eof));
+                    if (CurrentLength() > 0)
+                        tokens.Add(MakeToken(TokenKind.Html, start, current));
+                    tokens.Add(MakeToken(TokenKind.Eof));
                     return tokens;
                 }
-                if (isAtOpenBraceDouble())
+                if (IsAtOpenBraceDouble())
                 {
                     // Tokenize everyting before '{{' as html
-                    if (currentLength() > 0)
-                        tokens.Add(makeToken(TokenKind.Html, start, current));
+                    if (CurrentLength() > 0)
+                        tokens.Add(MakeToken(TokenKind.Html, start, current));
                     start = current;
                     // Advance over opening bracket
-                    advance();
-                    advance();
-                    tokens.Add(makeToken(TokenKind.OpenBraceDouble));
+                    Advance();
+                    Advance();
+                    tokens.Add(MakeToken(TokenKind.OpenBraceDouble));
                     // Tokenize from '{{' to '}}'
                     LexTemplateExpression();
                     start = current;
-                    if (isAtEnd())
+                    if (IsAtEnd())
                     {
-                        tokens.Add(makeToken(TokenKind.Eof));
+                        tokens.Add(MakeToken(TokenKind.Eof));
                         return tokens;
                     }
                     continue;
                 }
-                var c = advance();
+                var c = Advance();
                 if (c == '\n') newlineIndicies.Add(current - 1);
             }
             throw new ApplicationException("should be unreachable");
@@ -90,59 +90,59 @@ namespace GosharpTemplate
         {
             for (int i = 0; i < text.Length; i++)
             {
-                skipWhitespace();
+                SkipWhitespace();
                 start = current;
-                if (isAtEnd()) return;
+                if (IsAtEnd()) return;
 
-                if (isAtClosingBraceDouble())
+                if (IsAtClosingBraceDouble())
                 {
-                    advance();
-                    advance();
-                    tokens.Add(makeToken(TokenKind.ClosingBraceDouble));
+                    Advance();
+                    Advance();
+                    tokens.Add(MakeToken(TokenKind.ClosingBraceDouble));
                     return;
                 }
-                var c = advance();
+                var c = Advance();
 
                 if (char.IsLetter(c) || c == '_')
                 {
-                    tokens.Add(createIdentifier());
+                    tokens.Add(CreateIdentifier());
                     continue;
                 }
                 if (c == '-')
                 {
-                    tokens.Add(makeToken(TokenKind.Dash));
+                    tokens.Add(MakeToken(TokenKind.Dash));
                     continue;
                 }
                 if (c == '.')
                 {
-                    tokens.Add(makeToken(TokenKind.Dot));
+                    tokens.Add(MakeToken(TokenKind.Dot));
                     continue;
                 }
                 if (c == '"')
                 {
-                    var stringToken = createString();
+                    var stringToken = CreateString();
                     tokens.Add(stringToken);
                     if (stringToken.Kind == TokenKind.String) continue;
                     else return;
                 }
                 if (c == '\n')
                 {
-                    tokens.Add(errorToken("Unterminated '{{ }}'"));
+                    tokens.Add(ErrorToken("Unterminated '{{ }}'"));
                     newlineIndicies.Add(current - 1);
                     return;
                 }
-                tokens.Add(errorToken($"'{c}' is not a valid inside '{{{{ ... }}}}'"));
+                tokens.Add(ErrorToken($"'{c}' is not a valid inside '{{{{ ... }}}}'"));
             }
         }
 
-        private Token createIdentifier()
+        private Token CreateIdentifier()
         {
-            while (char.IsLetterOrDigit(peek()) || peek() == '_') advance();
-            var identType = identifierType();
-            return makeToken(identType);
+            while (char.IsLetterOrDigit(Peek()) || Peek() == '_') Advance();
+            var identType = IdentifierType();
+            return MakeToken(identType);
         }
 
-        private TokenKind identifierType()
+        private TokenKind IdentifierType()
         {
             var identifier = text.Substring(start, current - start);
             switch (identifier)
@@ -210,33 +210,33 @@ namespace GosharpTemplate
                 "Expected string token");
             return text.Substring(token.Start + 1, token.Length - 2);
         }
-        private Token createString()
+        private Token CreateString()
         {
-            while (peek() != '"' && !isAtEnd())
+            while (Peek() != '"' && !IsAtEnd())
             {
-                if (peek() == '\n')
+                if (Peek() == '\n')
                 {
                     newlineIndicies.Add(current);
-                    advance();
-                    return errorToken("Unterminated string.");
+                    Advance();
+                    return ErrorToken("Unterminated string.");
                 }
-                advance();
+                Advance();
             }
-            if (isAtEnd()) return errorToken("Unterminated string.");
+            if (IsAtEnd()) return ErrorToken("Unterminated string.");
             // closing quote
-            advance();
-            return makeToken(TokenKind.String);
+            Advance();
+            return MakeToken(TokenKind.String);
         }
 
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int currentLength()
+        private int CurrentLength()
         {
             return current - start;
         }
 
-        private Token makeToken(TokenKind kind)
+        private Token MakeToken(TokenKind kind)
         {
             var token = new Token()
             {
@@ -248,7 +248,7 @@ namespace GosharpTemplate
             return token;
         }
 
-        private Token makeToken(TokenKind kind, int from, int to)
+        private Token MakeToken(TokenKind kind, int from, int to)
         {
             var token = new Token()
             {
@@ -260,8 +260,7 @@ namespace GosharpTemplate
             return token;
         }
 
-
-        private Token errorToken(string errorMessage)
+        private Token ErrorToken(string errorMessage)
         {
             var length = current - start;
             var line = GetLine(start);
@@ -281,66 +280,50 @@ namespace GosharpTemplate
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool isAtOpenBraceDouble()
+        private bool IsAtOpenBraceDouble()
         {
             if (current + 1 >= text.Length) return false;
-            if (nth(0) == '{' && nth(1) == '{') return true;
+            if (Nth(0) == '{' && Nth(1) == '{') return true;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool isAtClosingBraceDouble()
+        private bool IsAtClosingBraceDouble()
         {
             if (current + 1 >= text.Length) return false;
-            if (nth(0) == '}' && nth(1) == '}') return true;
+            if (Nth(0) == '}' && Nth(1) == '}') return true;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool isAtEnd()
+        private bool IsAtEnd()
         {
             return current >= text.Length;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private char peek()
+        private char Peek()
         {
             return text[current];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private char nth(int n)
+        private char Nth(int n)
         {
             return n < text.Length ?
                 text[current + n]
                 : text[text.Length - 1];
         }
 
-        private bool match(char expected)
+        private void SkipWhitespace()
         {
-            if (isAtEnd()) return false;
-            if (text[current] != expected) return false;
-            current++;
-            return true;
-        }
-
-        private bool match(Func<char, bool> expected)
-        {
-            if (isAtEnd()) return false;
-            if (!expected.Invoke(text[current])) return false;
-            current++;
-            return true;
-        }
-
-        private void skipWhitespace()
-        {
-            while (peek() == ' ' || peek() == '\r' || peek() == '\t')
+            while (Peek() == ' ' || Peek() == '\r' || Peek() == '\t')
             {
-                advance();
+                Advance();
             }
         }
 
-        private char advance()
+        private char Advance()
         {
             current++;
             return text[current - 1];
@@ -355,7 +338,7 @@ namespace GosharpTemplate
         internal int DataIdx;
         internal TokenKind Kind;
 
-        public override string ToString()
+        public override readonly string ToString()
         {
             return $"Token: {Enum.GetName(typeof(TokenKind), Kind)}";
         }

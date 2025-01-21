@@ -84,7 +84,7 @@ namespace GosharpTemplate
         /// <exception cref="Exception" />
         public string ExecuteTemplate(string name, object data)
         {
-            var childrenIdx = parser.findTemplateChildrenIdx(name);
+            var childrenIdx = parser.FindTemplateChildrenIdx(name);
             var children = parser.allChildren[childrenIdx];
             var sb = new StringBuilder(4000);
             foreach (var child in children)
@@ -115,7 +115,7 @@ namespace GosharpTemplate
         {
             try
             {
-                var childrenIdx = parser.findTemplateChildrenIdx(name);
+                var childrenIdx = parser.FindTemplateChildrenIdx(name);
                 var children = parser.allChildren[childrenIdx];
                 var sb = new StringBuilder(4000);
                 foreach (var child in children)

@@ -20,6 +20,24 @@
             <td>
                 Price
             </td>
+            <td>
+                Customer Name
+            </td>
+            <td>
+                Customer Address
+            </td>
+            <td>
+                Customer City
+            </td>
+            <td>
+                Customer Zip
+            </td>
+            <td>
+                Customer EMail
+            </td>
+            <td>
+                Customer Phone
+            </td>
         </tr>
     </thead>
     <tbody>
@@ -43,6 +61,24 @@
             </td>
             <td>
                 {{ .Price }}
+            </td>
+            <td>
+                {{ .Customer.Name }}
+            </td>
+            <td>
+                {{ .Customer.Address }}
+            </td>
+            <td>
+                {{ .Customer.City }}
+            </td>
+            <td>
+                {{ .Customer.Zip }}
+            </td>
+            <td>
+                {{ .Customer.EMail }}
+            </td>
+            <td>
+                {{ .Customer.Phone }}
             </td>
         </tr>
         {{end}}

@@ -10,12 +10,6 @@ namespace GosharpTemplate
     using System;
     using System.Linq.Expressions;
 
-    internal struct DataAccessors
-    {
-        public List<Type> Types;
-        public List<string> Paths;
-        public List<Func<object, object>> Accessors;
-    }
 
     internal class Parser
     {
@@ -42,7 +36,7 @@ namespace GosharpTemplate
 #pragma warning disable 8618
         public Parser()
         {
-            initializeState();
+            InitializeState();
         }
 
         internal void Parse(Lexer lex, string rootName)
@@ -66,10 +60,10 @@ namespace GosharpTemplate
 
             var tree = CreateRootNode(rootName);
             tree.Kind = NodeKind.Root;
-            parseTemplate(tree);
+            ParseTemplate(tree);
         }
 
-        private void initializeState()
+        private void InitializeState()
         {
             pos = 0;
             tokens = new List<Token>();
@@ -84,12 +78,7 @@ namespace GosharpTemplate
             allHtml = new List<string>();
             allRoots = new List<RootData>();
 
-            accessors = new DataAccessors()
-            {
-                Types = new List<Type>(),
-                Paths = new List<string>(),
-                Accessors = new List<Func<object, object>>()
-            };
+            accessors = new DataAccessors();
 
             allIdents.Add(".");
         }
@@ -111,7 +100,7 @@ namespace GosharpTemplate
             return sb.ToString();
         }
 
-        private void parseTemplate(Node rootNode)
+        private void ParseTemplate(Node rootNode)
         {
             var childrenIdx = rootNode.Kind switch
             {
@@ -127,15 +116,15 @@ namespace GosharpTemplate
 
             for (int i = 0; i < tokens.Count; i++)
             {
-                switch (nth(0))
+                switch (Nth(0))
                 {
                     case TokenKind.Html:
                         allChildren[childrenIdx]
                             .Add(CreateHtmlNode());
-                        advance();
+                        Advance();
                         break;
                     case TokenKind.OpenBraceDouble:
-                        var node = parseExpression();
+                        var node = ParseExpression();
                         if (node.Kind == NodeKind.End) return;
                         if (node.Kind == NodeKind.Else)
                         {
@@ -148,133 +137,133 @@ namespace GosharpTemplate
                         return;
                     default:
                         throw new Exception(
-                            ErrorMessage($"Unexpedted token {nth(0)}, expected Html or '{{'"));
+                            ErrorMessage($"Unexpedted token {Nth(0)}, expected Html or '{{'"));
                 }
             }
         }
 
-        private Node parseExpression()
+        private Node ParseExpression()
         {
-            expect(TokenKind.OpenBraceDouble);
-            eat(TokenKind.Dash);
-            switch (nth(0))
+            Expect(TokenKind.OpenBraceDouble);
+            Eat(TokenKind.Dash);
+            switch (Nth(0))
             {
                 case TokenKind.KeywordEnd:
-                    return parseEnd();
+                    return ParseEnd();
                 case TokenKind.KeywordElse:
-                    return parseElse();
+                    return ParseElse();
                 case TokenKind.KeywordRange:
-                    return parseRange();
+                    return ParseRange();
                 case TokenKind.KeywordWith:
-                    return parseWith();
+                    return ParseWith();
                 case TokenKind.KeywordIf:
-                    return parseIf();
+                    return ParseIf();
                 case TokenKind.KeywordBlock:
-                    return parseBlock();
+                    return ParseBlock();
                 case TokenKind.KeywordDefine:
-                    return parseDefine();
+                    return ParseDefine();
                 case TokenKind.KeywordTemplate:
-                    return parseTemplateCall();
+                    return ParseTemplateCall();
                 case TokenKind.Dot:
-                    var identNode = parseIdent();
+                    var identNode = ParseIdent();
                     identNode.Kind = NodeKind.Expression;
-                    eat(TokenKind.Dash);
-                    expect(TokenKind.ClosingBraceDouble);
+                    Eat(TokenKind.Dash);
+                    Expect(TokenKind.ClosingBraceDouble);
                     return identNode;
                 default:
                     throw new Exception(ErrorMessage($"not a valid expression"));
             }
         }
 
-        private Node parseIf()
+        private Node ParseIf()
         {
             var start = pos;
-            expect(TokenKind.KeywordIf);
-            var identIdx = parseIdent().DataIdx;
+            Expect(TokenKind.KeywordIf);
+            var identIdx = ParseIdent().DataIdx;
             var node = CreateIfNode(start, identIdx);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
-            parseTemplate(node);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
+            ParseTemplate(node);
             return node;
         }
 
-        private Node parseRange()
+        private Node ParseRange()
         {
             var start = pos;
-            expect(TokenKind.KeywordRange);
-            var identIdx = parseIdent().DataIdx;
+            Expect(TokenKind.KeywordRange);
+            var identIdx = ParseIdent().DataIdx;
             var node = CreateRangeNode(start, identIdx);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
-            parseTemplate(node);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
+            ParseTemplate(node);
             return node;
         }
 
-        private Node parseWith()
+        private Node ParseWith()
         {
             var start = pos;
-            expect(TokenKind.KeywordWith);
-            var identIdx = parseIdent().DataIdx;
+            Expect(TokenKind.KeywordWith);
+            var identIdx = ParseIdent().DataIdx;
             var node = CreateWithNode(start, identIdx);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
-            parseTemplate(node);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
+            ParseTemplate(node);
             return node;
         }
-        private Node parseTemplateCall()
+        private Node ParseTemplateCall()
         {
             var start = pos;
-            expect(TokenKind.KeywordTemplate);
+            Expect(TokenKind.KeywordTemplate);
             var stringToken = expectToken(TokenKind.String);
             var identIdx = 0;
-            if (nth(0) == TokenKind.Dot)
+            if (Nth(0) == TokenKind.Dot)
             {
-                identIdx = parseIdent().DataIdx;
+                identIdx = ParseIdent().DataIdx;
             }
             var node = CreateTemplateNode(lexer.GetTextFromStringToken(stringToken), start, identIdx);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
             return node;
         }
 
-        private Node parseBlock()
+        private Node ParseBlock()
         {
             var start = pos;
-            expect(TokenKind.KeywordBlock);
+            Expect(TokenKind.KeywordBlock);
             var stringToken = expectToken(TokenKind.String);
             var identIdx = 0;
-            if (nth(0) == TokenKind.Dot)
+            if (Nth(0) == TokenKind.Dot)
             {
-                identIdx = parseIdent().DataIdx;
+                identIdx = ParseIdent().DataIdx;
             }
             var node = CreateBlockNode(lexer.GetTextFromStringToken(stringToken), identIdx, start);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
-            parseTemplate(node);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
+            ParseTemplate(node);
             return node;
         }
 
-        private Node parseDefine()
+        private Node ParseDefine()
         {
             var start = pos;
-            expect(TokenKind.KeywordDefine);
+            Expect(TokenKind.KeywordDefine);
             var stringToken = expectToken(TokenKind.String);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
             var node = CreateDefineNode(lexer.GetTextFromStringToken(stringToken), start);
-            parseTemplate(node);
+            ParseTemplate(node);
             return node;
         }
 
-        private Node parseIdent()
+        private Node ParseIdent()
         {
-            expect(TokenKind.Dot);
+            Expect(TokenKind.Dot);
             var node = CreateIdentNode();
             var sb = new StringBuilder();
             sb.Append(".");
-            while (!at(TokenKind.ClosingBraceDouble))
+            while (!At(TokenKind.ClosingBraceDouble))
             {
-                switch (nth(0))
+                switch (Nth(0))
                 {
                     case TokenKind.Dash:
                         break;
@@ -287,57 +276,57 @@ namespace GosharpTemplate
                     default:
                         throw new Exception(ErrorMessage($"Expected '.', identifier or '}}'"));
                 }
-                advance();
+                Advance();
             }
             allIdents[node.DataIdx] = sb.ToString();
             return node;
         }
 
-        private Node parseEnd()
+        private Node ParseEnd()
         {
             var curPos = pos;
-            expect(TokenKind.KeywordEnd);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
+            Expect(TokenKind.KeywordEnd);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
             return CreateNodeAt(curPos, NodeKind.End);
         }
 
-        private Node parseElse()
+        private Node ParseElse()
         {
             var curPos = pos;
-            expect(TokenKind.KeywordElse);
-            eat(TokenKind.Dash);
-            expect(TokenKind.ClosingBraceDouble);
+            Expect(TokenKind.KeywordElse);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
             return CreateNodeAt(curPos, NodeKind.Else);
         }
 
-        private void advance()
+        private void Advance()
         {
-            Debug.Assert(!eof());
+            Debug.Assert(!Eof());
             pos += 1;
         }
 
-        private bool eof()
+        private bool Eof()
         {
             return pos == tokens.Count;
         }
 
-        private TokenKind nth(int lookahead)
+        private TokenKind Nth(int lookahead)
         {
             if (pos + lookahead >= tokens.Count) return TokenKind.Eof;
             return tokens[pos + lookahead].Kind;
         }
 
-        private bool at(TokenKind kind)
+        private bool At(TokenKind kind)
         {
-            return nth(0) == kind;
+            return Nth(0) == kind;
         }
 
-        private bool eat(TokenKind kind)
+        private bool Eat(TokenKind kind)
         {
-            if (at(kind))
+            if (At(kind))
             {
-                advance();
+                Advance();
                 return true;
             }
             else
@@ -346,22 +335,22 @@ namespace GosharpTemplate
             }
         }
 
-        private void expect(TokenKind kind)
+        private void Expect(TokenKind kind)
         {
-            if (eat(kind))
+            if (Eat(kind))
             {
                 return;
             }
-            throw new Exception(ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
+            throw new Exception(ErrorMessage($"expected '{kind}' got '{Nth(0)}'"));
         }
 
         private Token expectToken(TokenKind kind)
         {
-            if (eat(kind))
+            if (Eat(kind))
             {
                 return tokens[pos - 1];
             }
-            throw new Exception(ErrorMessage($"expected '{kind}' got '{nth(0)}'"));
+            throw new Exception(ErrorMessage($"expected '{kind}' got '{Nth(0)}'"));
         }
 
 
@@ -560,7 +549,7 @@ namespace GosharpTemplate
                     case NodeKind.Expression:
                         {
                             var ident = allIdents[node.DataIdx];
-                            var accessor = resolveObjectMembers(data, ident);
+                            var accessor = GetDataAccessorFunction(data, ident);
                             sb.Append(accessor.Invoke(data)?.ToString() ?? "");
                         }
                         break;
@@ -574,7 +563,7 @@ namespace GosharpTemplate
                         {
                             var ifData = allIfs[node.DataIdx];
                             var ident = allIdents[ifData.IdentIdx];
-                            var ifAccessor = resolveObjectMembers(data, ident);
+                            var ifAccessor = GetDataAccessorFunction(data, ident);
                             var ifVariable = ifAccessor.Invoke(data);
                             if (ifVariable.GetType() != typeof(bool))
                                 throw new ArgumentException(
@@ -592,7 +581,7 @@ namespace GosharpTemplate
                         {
                             var withData = allWiths[node.DataIdx];
                             var ident = allIdents[withData.IdentIdx];
-                            var withAccessor = resolveObjectMembers(data, ident);
+                            var withAccessor = GetDataAccessorFunction(data, ident);
                             var withVariable = withAccessor.Invoke(data);
                             var varIsNull = withVariable is null;
                             var children = varIsNull ?
@@ -608,9 +597,9 @@ namespace GosharpTemplate
                         {
                             var rangeData = allRanges[node.DataIdx];
                             var ident = allIdents[rangeData.IdentIdx];
-                            var rangeAccessor = resolveObjectMembers(data, ident);
+                            var rangeAccessor = GetDataAccessorFunction(data, ident);
                             var rangeVariable = rangeAccessor.Invoke(data);
-                            if (!isCollection(rangeVariable))
+                            if (!IsCollection(rangeVariable))
                                 throw new ArgumentException(
                                     $"{ident} needs to implement ICollection to be used in range expression");
                             var children = allChildren[rangeData.ChildrenIdx];
@@ -627,7 +616,7 @@ namespace GosharpTemplate
                         {
                             var blockData = allBlocks[node.DataIdx];
                             var ident = allIdents[blockData.DataIdentIdx];
-                            var dataAccessor = resolveObjectMembers(data, ident);
+                            var dataAccessor = GetDataAccessorFunction(data, ident);
                             var dataVariable = dataAccessor.Invoke(data);
                             var children = allChildren[blockData.ChildrenIdx];
                             for (var i = children.Count - 1; i >= 0; i--)
@@ -640,9 +629,9 @@ namespace GosharpTemplate
                         {
                             var templateData = allTemplateCalls[node.DataIdx];
                             var ident = allIdents[templateData.IdentIdx];
-                            var dataAccessor = resolveObjectMembers(data, ident);
+                            var dataAccessor = GetDataAccessorFunction(data, ident);
                             var dataVariable = dataAccessor.Invoke(data);
-                            var childrenIdx = findTemplateChildrenIdx(templateData.Name);
+                            var childrenIdx = FindTemplateChildrenIdx(templateData.Name);
                             var children = allChildren[childrenIdx];
                             for (var i = children.Count - 1; i >= 0; i--)
                             {
@@ -657,7 +646,7 @@ namespace GosharpTemplate
             return sb.ToString();
         }
 
-        internal int findTemplateChildrenIdx(string name)
+        internal int FindTemplateChildrenIdx(string name)
         {
             var idx = allRoots.FindIndex(x => x.Name == name);
             if (idx > -1) return allRoots[idx].ChildrenIdx;
@@ -668,7 +657,7 @@ namespace GosharpTemplate
             throw new ArgumentException($"Template '{name}' was not found");
         }
 
-        static bool isCollection(object o) =>
+        static bool IsCollection(object o) =>
             o.GetType().GetInterfaces().Any(i => i.Name == "ICollection");
 
         /// <summary>
@@ -677,7 +666,7 @@ namespace GosharpTemplate
         ///     var accessor = GenerateGetterLamda(customer, ".Address.Town")
         ///     Console.WriteLine(accessor.Invoke(customer))  => 'Oslo'
         /// </summary>
-        private static Func<object, object> GenerateGetterLambda(object data, string path)
+        private static Func<object, object> CreateAccessorFunc(object data, string path)
         {
             var objParameterExpr = Expression.Parameter(typeof(object), "instance");
             var instanceExpr = Expression.Convert(objParameterExpr, data.GetType());
@@ -695,33 +684,26 @@ namespace GosharpTemplate
             return Expression.Lambda<Func<object, object>>(current, objParameterExpr).Compile();
         }
 
-        internal Func<object, object> resolveObjectMembers(object data, string path)
+        internal Func<object, object> GetDataAccessorFunction(object data, string path)
         {
             if (data is null && path == ".")
+            { 
                 return (x) => null;
-            var typ = data.GetType();
-            // Check if type has allready been resolved
-            for (int i = 0; i < accessors.Types.Count; i++)
-            {
-                if (accessors.Types[i] == typ)
-                {
-                    if (accessors.Paths[i] == path)
-                    {
-                        return accessors.Accessors[i];
-                    }
-                }
             }
-            var accessor = GenerateGetterLambda(data, path);
 
-            // store resolved types
-            accessors.Types.Add(typ);
-            accessors.Paths.Add(path);
-            accessors.Accessors.Add(accessor);
+            // Check if accessor function exists
+            var typ = data.GetType();
+            if (accessors.TryFind(typ, path, out Func<object, object> x)) return x;
+
+            // else create accessor function
+            var accessor = CreateAccessorFunc(data, path);
+            // and store it
+            accessors.Add(typ, path, accessor);
             return accessor;
         }
 
         // Big ugly print method for debugging
-        private string printNode(Node node, int level)
+        private string PrintNode(Node node, int level)
         {
             var sb = new StringBuilder();
             sb.Append(new string('\t', level));
@@ -737,7 +719,7 @@ namespace GosharpTemplate
                         sb.AppendLine("\tChildren [");
                         foreach (var child in allChildren[node.DataIdx])
                         {
-                            sb.AppendLine(printNode(child, level + 2));
+                            sb.AppendLine(PrintNode(child, level + 2));
                         }
                         sb.Append(new string('\t', level));
                         sb.AppendLine("\t]");
@@ -776,7 +758,7 @@ namespace GosharpTemplate
                         var childrenIdx = allDefines[node.DataIdx].ChildrenIdx;
                         foreach (var child in allChildren[childrenIdx])
                         {
-                            sb.AppendLine(printNode(child, level + 2));
+                            sb.AppendLine(PrintNode(child, level + 2));
                         }
                         sb.Append(new string('\t', level));
                         sb.AppendLine("\t]");
@@ -804,7 +786,7 @@ namespace GosharpTemplate
                         var childrenIdx = blockData.ChildrenIdx;
                         foreach (var child in allChildren[childrenIdx])
                         {
-                            sb.AppendLine(printNode(child, level + 2));
+                            sb.AppendLine(PrintNode(child, level + 2));
                         }
                         sb.Append(new string('\t', level));
                         sb.AppendLine("\t]");
@@ -834,7 +816,7 @@ namespace GosharpTemplate
                         sb.AppendLine("\tChildren [");
                         foreach (var child in allChildren[rangeData.ChildrenIdx])
                         {
-                            sb.AppendLine(printNode(child, level + 2));
+                            sb.AppendLine(PrintNode(child, level + 2));
                         }
                         sb.Append(new string('\t', level));
                         sb.AppendLine("\t]");
@@ -848,7 +830,7 @@ namespace GosharpTemplate
                         sb.AppendLine("\tChildren if true [");
                         foreach (var child in allChildren[ifData.ChildrenIdxTrue])
                         {
-                            sb.AppendLine(printNode(child, level + 2));
+                            sb.AppendLine(PrintNode(child, level + 2));
                         }
                         sb.Append(new string('\t', level));
                         sb.AppendLine("\t]");
@@ -856,7 +838,7 @@ namespace GosharpTemplate
                         sb.AppendLine("\tChildren if false [");
                         foreach (var child in allChildren[ifData.ChildrenIdxFalse])
                         {
-                            sb.AppendLine(printNode(child, level + 2));
+                            sb.AppendLine(PrintNode(child, level + 2));
                         }
                         sb.Append(new string('\t', level));
                         sb.AppendLine("\t]");
@@ -982,6 +964,47 @@ namespace GosharpTemplate
             ChildrenIdxFalse = childrenIdxFalse;
         }
 
+    }
+
+    /// <summary>
+    /// Store / Find Accessor functions used in the template
+    /// </summary>
+    internal class DataAccessors
+    {
+        private readonly List<Type> types;
+        private readonly List<string> paths;
+        private readonly List<Func<object, object>> accessors;
+
+        public DataAccessors()
+        {
+            types = new List<Type>();
+            paths = new List<string>();
+            accessors = new List<Func<object, object>>();
+        }
+
+        public void Add(Type type, string path, Func<object, object> accessor)
+        {
+            types.Add(type);
+            paths.Add(path);
+            accessors.Add(accessor);
+        }
+
+        public bool TryFind(Type type, string path, out Func<object, object> accessor)
+        {
+            accessor = null;
+            for (int i = 0; i < types.Count; i++)
+            {
+                if (types[i] == type)
+                {
+                    if (paths[i] == path)
+                    {
+                        accessor = accessors[i];
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 
 }

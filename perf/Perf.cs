@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 public class Perf
 {
-    const int RUNS = 1000;
+    const int RUNS = 10000;
 
     public static void Main(params string[] args)
     {
@@ -15,7 +15,8 @@ public class Perf
     {
         //Setup
         var template = new Template();
-        template.ParseFiles("List.html");
+        //template.ParseFiles("List.html");
+        template.ParseFiles("../../../List.html");
         var items = GenerateRange(1000);
         var sw = new Stopwatch();
 
@@ -34,13 +35,23 @@ public class Perf
         Console.WriteLine($"Average: {times.Skip(1).Average()} (micros)");
     }
 
+    record Customer(
+        string Name,
+        string Address,
+        string City,
+        string Zip,
+        string EMail,
+        string Phone
+    );
+
     record TableItem(
         int Id,
         string Name,
         bool Valid,
         string Description,
         int Count,
-        double Price
+        double Price,
+        Customer Customer
     );
 
     static List<TableItem> GenerateRange(int n)
@@ -55,7 +66,15 @@ public class Perf
                     true,
                     "Description {i}",
                     i % 100,
-                    Random.Shared.NextDouble() * 1000.0
+                    Random.Shared.NextDouble() * 1000.0,
+                    new Customer(
+                        $"Customer {i}",
+                        $"Customer Street {i}",
+                        $"City{i}",
+                        $"{i}",
+                        $"Cust.omer{i}@email.com",
+                        $"{i}"
+                    )
                 )
             );
         }
