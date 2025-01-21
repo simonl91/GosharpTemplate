@@ -16,31 +16,50 @@ type TableItem struct {
 	Description string
 	Count       int
 	Price       float64
+	Customer	Customer
 }
+
+type Customer struct {
+	Name	string
+	Address string
+	City	string
+	Zip		string
+	EMail	string
+	Phone	string
+}	
+
 
 func GenerateRange(n int) []TableItem {
 	var items = make([]TableItem, n)
 	for i := 0; i < n; i++ {
 		items[i] = TableItem{
 			i,
-			fmt.Sprintf("item%d", i),
+			fmt.Sprintf("item %d", i),
 			true,
-			fmt.Sprintf("Description%d", i),
+			fmt.Sprintf("Description %d", i),
 			i % 100,
 			100.01,
+			Customer {
+				fmt.Sprintf("Customer %d", i),
+				fmt.Sprintf("Customer Street %d", i),
+				fmt.Sprintf("City %d", i),
+				fmt.Sprintf("%d", i),
+				fmt.Sprintf("Cust.omer%d@email.com", i),
+				fmt.Sprintf("%d", i),
+			},
 		}
 	}
 	return items
 }
 
 func main() {
-	tmpl, err := template.ParseFiles("List.html")
+	tmpl, err := template.ParseFiles("../../../List.html")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	items := GenerateRange(RUNS)
+	items := GenerateRange(1000)
 
 	var times = make([]int64, RUNS)
 	for i := 0; i < RUNS; i++ {
@@ -73,8 +92,8 @@ func main() {
 	average := sum / RUNS
 
 	fmt.Printf("Table with 1000 items, %d runs:\n", RUNS)
-	fmt.Printf("Min: %d\n", min)
-	fmt.Printf("Max: %d\n", max)
-	fmt.Printf("Average: %d\n", average)
+	fmt.Printf("Min: %d (micros)\n", min)
+	fmt.Printf("Max: %d (micros)\n", max)
+	fmt.Printf("Average: %d (micros)\n", average)
 
 }

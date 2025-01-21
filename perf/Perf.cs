@@ -3,12 +3,32 @@ using System.Diagnostics;
 
 public class Perf
 {
-    const int RUNS = 10000;
+    const bool RUN_GO = true; 
+    const int RUNS = 1000;
 
     public static void Main(params string[] args)
     {
+        Console.WriteLine("Run Csharp:");
         Table1000Items();
 
+#if true
+        Console.WriteLine();
+        Console.WriteLine();
+        Console.WriteLine("Run Go:");
+        Process cmd = new Process();
+        cmd.StartInfo.FileName = "cmd.exe";
+        cmd.StartInfo.RedirectStandardInput = true;
+        cmd.StartInfo.RedirectStandardOutput = true;
+        cmd.StartInfo.CreateNoWindow = true;
+        cmd.StartInfo.UseShellExecute = false;
+        cmd.Start();
+
+        cmd.StandardInput.WriteLine("go run ../../../perf.go");
+        cmd.StandardInput.Flush();
+        cmd.StandardInput.Close();
+        cmd.WaitForExit();
+        Console.WriteLine(cmd.StandardOutput.ReadToEnd());
+#endif
     }
 
     static void Table1000Items()
