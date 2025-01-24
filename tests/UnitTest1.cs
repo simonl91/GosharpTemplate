@@ -1,4 +1,5 @@
 using GosharpTemplate;
+using System.Text.RegularExpressions;
 
 namespace GosharpTemplate.Tests;
 
@@ -160,6 +161,73 @@ Josie"
     }
 
     [Test]
+    public void TestRangeSequence()
+    {
+        var template = new Template();
+        template.Parse("table", @"
+            <table>
+                <tbody>
+                {{range .}}
+                    {{template ""row"" .}}
+                {{end}}
+                </tbody>
+            </table>
+            {{define ""row""}}
+                <tr>
+                    <td>{{.Number}}</td>
+                    <td>{{.Name}}</td>
+                </tr>
+            {{end}}"
+        );
+
+        var data = new[]
+        {
+            new { Number = 1, Name = "Item1" },
+            new { Number = 2, Name = "Item2" },
+            new { Number = 3, Name = "Item3" },
+            new { Number = 4, Name = "Item4" },
+            new { Number = 5, Name = "Item5" },
+            new { Number = 6, Name = "Item6" },
+            new { Number = 7, Name = "Item7" },
+            new { Number = 8, Name = "Item8" },
+            new { Number = 9, Name = "Item9" },
+            new { Number = 10, Name = "Item10" },
+            new { Number = 11, Name = "Item11" },
+            new { Number = 12, Name = "Item12" },
+            new { Number = 13, Name = "Item13" },
+            new { Number = 14, Name = "Item14" },
+            new { Number = 15, Name = "Item15" },
+            new { Number = 16, Name = "Item16" },
+            new { Number = 17, Name = "Item17" },
+            new { Number = 18, Name = "Item18" },
+            new { Number = 19, Name = "Item19" },
+            new { Number = 20, Name = "Item20" },
+            new { Number = 21, Name = "Item21" },
+            new { Number = 22, Name = "Item22" },
+            new { Number = 23, Name = "Item23" },
+            new { Number = 24, Name = "Item24" },
+            new { Number = 25, Name = "Item25" },
+            new { Number = 26, Name = "Item26" },
+            new { Number = 27, Name = "Item27" },
+            new { Number = 28, Name = "Item28" },
+            new { Number = 29, Name = "Item29" },
+            new { Number = 30, Name = "Item30" },
+            new { Number = 31, Name = "Item31" },
+            new { Number = 32, Name = "Item32" },
+        };
+
+        var result = template.ExecuteTemplate("table", data);
+        var numberPattern = @"\b\d+\b";
+        var matches = Regex.Matches(result, numberPattern);
+        Assert.That(matches.Count, Is.EqualTo(32));
+        for (int i = 0; i < matches.Count; i++)
+        {
+            Assert.That(matches[i].Value,
+                Is.EqualTo((i+1).ToString()));
+        }
+    }
+
+    [Test]
     public void TestTodoAppHtml()
     {
         var template = new Template();
@@ -187,9 +255,8 @@ Josie"
         };
 
         var result = template.ExecuteTemplate("layout", data);
-        Assert.Pass();
-        Assert.That(result,
-            Is.EqualTo(@"<!DOCTYPE html>
+        Assert.That(result, Is.EqualTo(@"
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -201,18 +268,18 @@ Josie"
 
 <body>
     <section class=""app"">
-
+        
 <section class=""app"">
     <header class=""header"">
         <h1>This is the title</h1>
     </header>
     <section class=""create"" data-todo=""create"">
-        <input placeholder=""Write something!"" autofocus class=""new-item"" data-todo=""new"" />    
+        <input placeholder=""Write something!"" autofocus class=""new-item"" data-todo=""new"" />
         <hr />
     </section>
     <section class=""main"" data-todo=""main"">
         <ul class=""list"" data-todo=""list"">
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox""  checked >
@@ -221,7 +288,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item1"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox"" >
@@ -230,7 +297,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item2"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox"" >
@@ -239,7 +306,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item3"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox""  checked >
@@ -248,7 +315,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item4"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox""  checked >
@@ -257,7 +324,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item1"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox"" >
@@ -266,7 +333,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item2"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox"" >
@@ -275,7 +342,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item3"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox""  checked >
@@ -284,7 +351,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item4"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox""  checked >
@@ -293,7 +360,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item1"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox"" >
@@ -302,7 +369,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item2"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox"" >
@@ -311,7 +378,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item3"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox""  checked >
@@ -320,7 +387,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item4"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox""  checked >
@@ -329,7 +396,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item1"">
 </div>
 </li>
-
+            
             <li class=""item"">
 <div class=""view"">
     <input data-todo=""toggle"" class=""toggle"" type=""checkbox"" >
@@ -338,7 +405,7 @@ Josie"
     <input class=""edit"" data-todo=""edit"" value=""Item2"">
 </div>
 </li>
-
+            
         </ul>
     </section>
 </section>

@@ -617,7 +617,7 @@ namespace GosharpTemplate
                                 throw new ArgumentException(
                                     $"{ident} needs to implement ICollection to be used in range expression");
                             var children = allChildren[rangeData.ChildrenIdx];
-                            foreach (var rangeObj in (ICollection)rangeVariable)
+                            foreach (var rangeObj in ((ICollection)rangeVariable).OfType<object>().Reverse())
                             {
                                 for (var i = children.Count - 1; i >= 0; i--)
                                 {
