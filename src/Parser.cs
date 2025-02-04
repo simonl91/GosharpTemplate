@@ -148,6 +148,8 @@ namespace GosharpTemplate
             Eat(TokenKind.Dash);
             switch (Nth(0))
             {
+                case TokenKind.Comment:
+                    return ParseComment();
                 case TokenKind.KeywordEnd:
                     return ParseEnd();
                 case TokenKind.KeywordElse:
@@ -282,6 +284,15 @@ namespace GosharpTemplate
             return node;
         }
 
+        private Node ParseComment()
+        {
+            var curPos = pos;
+            Expect(TokenKind.Comment);
+            Eat(TokenKind.Dash);
+            Expect(TokenKind.ClosingBraceDouble);
+            return CreateNodeAt(curPos, NodeKind.Comment);
+        }
+
         private Node ParseEnd()
         {
             var curPos = pos;
@@ -302,6 +313,7 @@ namespace GosharpTemplate
 
         private void Advance()
         {
+            //lexer.PrintToken(tokens[pos]);
             Debug.Assert(!Eof());
             pos += 1;
         }
@@ -546,6 +558,8 @@ namespace GosharpTemplate
                 var (node, data) = stack.Pop();
                 switch (node.Kind)
                 {
+                    case NodeKind.Comment:
+                        continue;
                     case NodeKind.Expression:
                         {
                             var ident = allIdents[node.DataIdx];
@@ -894,6 +908,7 @@ namespace GosharpTemplate
         Range,
         If,
         Expression,
+        Comment,
         Error
     }
 

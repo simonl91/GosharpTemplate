@@ -125,6 +125,11 @@ namespace GosharpTemplate
                     if (stringToken.Kind == TokenKind.String) continue;
                     else return;
                 }
+                if (IsAtStartComment())
+                {
+                    tokens.Add(CreateComment());
+                    continue;
+                }
                 if (c == '\n')
                 {
                     tokens.Add(ErrorToken("Unterminated '{{ }}'"));
@@ -234,6 +239,22 @@ namespace GosharpTemplate
             return MakeToken(TokenKind.String);
         }
 
+        private Token CreateComment()
+        {
+            while (!IsAtStopComment() && !IsAtEnd())
+            {
+                if (Peek() == '\n')
+                {
+                    newlineIndicies.Add(current);
+                }
+                Advance();
+            }
+            if (IsAtEnd()) return ErrorToken("Unterminated Comment.");
+            Advance();
+            Advance();
+            return MakeToken(TokenKind.Comment);
+        }
+
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -302,6 +323,22 @@ namespace GosharpTemplate
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsAtStartComment()
+        {
+            if (current + 1 >= text.Length) return false;
+            if (Nth(-1) == '/' && Nth(0) == '*') return true;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsAtStopComment()
+        {
+            if (current + 1 >= text.Length) return false;
+            if (Nth(0) == '*' && Nth(1) == '/') return true;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsAtEnd()
         {
             return current >= text.Length;
@@ -358,6 +395,7 @@ namespace GosharpTemplate
         Ident,
         Html,
         String,
+        Comment,
         Error,
         Eof,
         Dash,
