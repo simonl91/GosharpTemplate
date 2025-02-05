@@ -723,7 +723,8 @@ namespace GosharpTemplate
 
             // Check if accessor function exists
             var typ = data.GetType();
-            if (accessors.TryFind(typ, path, out Func<object, object> x)) return x;
+            if (accessors.TryFind(typ, path, out Func<object, object> x)) 
+                return x;
 
             // else create accessor function
             var accessor = CreateAccessorFunc(data, path);

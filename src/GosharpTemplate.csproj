@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>GosharpTemplate</Title>
     <Authors>Simon Langlo</Authors>
-    <Version>0.1.8</Version>
+    <Version>0.1.9</Version>
     <Description>Go-style templating library for c#</Description>
     <Copyright>Simon Langlo</Copyright>
     <PackageProjectUrl>https://github.com/simonl91/GosharpTemplate</PackageProjectUrl>
@@ -16,7 +16,7 @@
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <IncludeSymbols>True</IncludeSymbols>
-    <PackageReleaseNotes>Add with keyword</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix: reverse range</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
