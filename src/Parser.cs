@@ -595,15 +595,18 @@ namespace GosharpTemplate
                         {
                             var withData = allWiths[node.DataIdx];
                             var ident = allIdents[withData.IdentIdx];
-                            var withAccessor = GetDataAccessorFunction(data, ident);
-                            var withVariable = withAccessor.Invoke(data);
-                            var varIsNull = withVariable is null;
-                            var children = varIsNull ?
-                                allChildren[withData.ChildrenIdxFalse]
-                                : allChildren[withData.ChildrenIdxTrue];
+                            var hasData = false;
+                            object withVariable = null;
+                            hasData = TryGetDataAccessorFunction(data, ident, out Func<object,object> withAccessor);
+                            if (hasData)
+                                withVariable = withAccessor.Invoke(data);
+                            hasData = withVariable != null;
+                            var children = hasData ?
+                                allChildren[withData.ChildrenIdxTrue]
+                                : allChildren[withData.ChildrenIdxFalse];
                             for (var i = children.Count - 1; i >= 0; i--)
                             {
-                                stack.Push((children[i], varIsNull ? data : withVariable));
+                                stack.Push((children[i], hasData ? withVariable : data));
                             }
                         }
                         break;
@@ -712,6 +715,17 @@ namespace GosharpTemplate
             current = Expression.Convert(current, typeof(object));
 
             return Expression.Lambda<Func<object, object>>(current, objParameterExpr).Compile();
+        }
+
+        internal bool TryGetDataAccessorFunction(object data, string path, out Func<object, object> accessor)
+        {
+            accessor = null;
+            try {
+                accessor = GetDataAccessorFunction(data,path);
+                return true;
+            } catch {
+                return false;
+            }
         }
 
         internal Func<object, object> GetDataAccessorFunction(object data, string path)
