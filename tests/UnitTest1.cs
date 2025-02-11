@@ -79,8 +79,7 @@ Josie"
         var withoutTitle = template.ExecuteTemplate("with.html",
             new WithPageData
             {
-                Title = null,
-                OtherTitle = null
+                Title = null
             }
         );
 

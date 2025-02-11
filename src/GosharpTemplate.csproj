@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>GosharpTemplate</Title>
     <Authors>Simon Langlo</Authors>
-    <Version>0.1.9</Version>
+    <Version>0.1.10</Version>
     <Description>Go-style templating library for c#</Description>
     <Copyright>Simon Langlo</Copyright>
     <PackageProjectUrl>https://github.com/simonl91/GosharpTemplate</PackageProjectUrl>
@@ -16,7 +16,7 @@
     <NeutralLanguage>en</NeutralLanguage>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <IncludeSymbols>True</IncludeSymbols>
-    <PackageReleaseNotes>Fix: reverse range</PackageReleaseNotes>
+    <PackageReleaseNotes>With no longer crash on data members that does not exists</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
